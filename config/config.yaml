@@ -1,0 +1,12 @@
+proto:
+  max_workers: 2
+  address: "[::]:50051"
+device_info:
+  device_id: "1"
+  provider_id: "1"
+  type: "QPU"
+  max_qubits: 64
+  max_shots: 10000
+simulator_mode: true
+device_status: active
+device_topology_json_path: config/_device_topology.json

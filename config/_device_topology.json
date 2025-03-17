@@ -1,0 +1,62 @@
+{
+  "name": "test_device",
+  "device_id": "1",
+  "qubits": [
+    {
+      "id": 0,
+      "physical_id": 5,
+      "position": {
+        "x": 3,
+        "y": 0
+      },
+      "fidelity": 0.0,
+      "meas_error": {
+        "prob_meas1_prep0": 0.0,
+        "prob_meas0_prep1": 0.0
+      },
+      "qubit_lifetime": {
+        "t1": 0.0,
+        "t2": 0.0
+      },
+      "gate_duration": {
+        "rz": 0,
+        "sx": 0,
+        "x": 0
+      }
+    },
+    {
+      "id": 1,
+      "physical_id": 7,
+      "position": {
+        "x": 3,
+        "y": -1
+      },
+      "fidelity": 0.0,
+      "meas_error": {
+        "prob_meas1_prep0": 0.0,
+        "prob_meas0_prep1": 0.0
+      },
+      "qubit_lifetime": {
+        "t1": 0.0,
+        "t2": 0.0
+      },
+      "gate_duration": {
+        "rz": 0,
+        "sx": 0,
+        "x": 0
+      }
+    }
+  ],
+  "couplings": [
+    {
+      "control": 0,
+      "target": 1,
+      "fidelity": 0.0,
+      "gate_duration": {
+        "cx": 0,
+        "rzx90": 0
+      }
+    }
+  ],
+  "timestamp": "2025-02-12 17:49:02.331959"
+}
