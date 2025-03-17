@@ -27,6 +27,10 @@ generate-topology:
 test:
 	@uv run pytest
 
+
+docs:
+	@uv run mkdocs build
+
 help: ## Show this help message
 	@echo "Usage: make [target]"
 	@echo ""

@@ -1,0 +1,41 @@
+site_name: "device-gateway"
+repo_url: "https://github.com/oqtopus-team/device-gateway"
+
+nav:
+  - Home: index.md
+  - Developer Guidelines:
+      - How to Contribute: CONTRIBUTING.md
+      - Code of Conduct: CODE_OF_CONDUCT.md
+      - Security: SECURITY.md
+
+theme:
+  name: material
+  palette:
+    primary: "indigo"
+    accent: "indigo"
+  font:
+    text: "Roboto"
+    code: "Roboto Mono"
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - toc.follow
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - admonition
+  - footnotes
+  - codehilite
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+extra_css:
+  - "https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+  - "css/custom.css"
