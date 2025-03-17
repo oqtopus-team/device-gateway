@@ -2,7 +2,7 @@ SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
 
-.PHONY: 
+.PHONY:
 
 list-service: ## List all services
 	@grpcurl -plaintext localhost:50051 list
