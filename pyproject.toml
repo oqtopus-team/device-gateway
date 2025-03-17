@@ -21,7 +21,19 @@ dependencies = [
 ]
 
 [dependency-groups]
-test = ["pytest", "pytest-cov", "mypy"]
+dev = [
+    "mypy>=1.15.0",
+    "pytest>=8.3.5",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.11.0",
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.8",
+    "mkdocs-macros-plugin>=1.3.7",
+    "mkdocs-glightbox>=0.4.0",
+    "mkdocs-static-i18n>=1.3.0",
+    "pymdown-extensions>=10.14.3",
+    "mkdocs-exclude>=1.0.2",
+]
 
 
 [build-system]
