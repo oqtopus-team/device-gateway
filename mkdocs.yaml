@@ -10,6 +10,8 @@ nav:
 
 theme:
   name: material
+  logo: image/oqtopus_icon.png
+  favicon: image/oqtopus_favicon.png
   palette:
     primary: "indigo"
     accent: "indigo"
