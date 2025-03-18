@@ -18,7 +18,7 @@ The device-gateway is a server that translates OpenQASM3 instructions into comma
 
 You can use the DOI to cite Device Gateway in your research.
 
-[![DOI](https://zenodo.org/badge/15043991.svg)](https://zenodo.org/badge/latestdoi/15043991)
+![DOI](https://zenodo.org/badge/15043991.svg)](https://zenodo.org/badge/latestdoi/15043991)
 
 Citation information is also available in the [CITATION](https://github.com/oqtopus-team/device-gateway/blob/main/CITATION.cff) file.
 
