@@ -7,4 +7,6 @@ services:
       - ./logs:/app/logs
     environment:
       - PYTHONUNBUFFERED=1
+    ports:
+      - "50051:50051"
     restart: unless-stopped
