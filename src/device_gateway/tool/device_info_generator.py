@@ -3,9 +3,11 @@ import copy
 import datetime
 import json
 import logging
+from pathlib import Path
 from typing import Optional
 
 import networkx as nx
+import yaml  # type: ignore[import]
 from matplotlib import pyplot as plt
 
 logger = logging.getLogger(__name__)
@@ -26,6 +28,7 @@ class DeviceInfoGenerator:
         qubit_index_list_file: Optional[str] = None,
         system_note: dict = {},
         system_note_file: Optional[str] = None,
+        is_simulator: bool = False,
     ):
         """
         Initialize parameters and either the data or file paths for qubit indices and system note.
@@ -59,8 +62,11 @@ class DeviceInfoGenerator:
         self.qubit_index_list = qubit_index_list
         self.qubit_index_list_file = qubit_index_list_file
 
-        if system_note is None and system_note_file is None:
-            raise ValueError("Either system_note or system_note_file must be provided.")
+        self.is_simulator = is_simulator
+        if not self.is_simulator and system_note is None and system_note_file is None:
+            raise ValueError(
+                "Either system_note or system_note_file must be provided for non-simulator mode."
+            )
         self.system_note = system_note
         self.system_note_file = system_note_file
 
@@ -85,20 +91,64 @@ class DeviceInfoGenerator:
                 logger.error(f"Failed to load qubit index list from file: {e}")
                 raise
 
+    def _generate_dummy_system_note(self) -> dict:
+        """
+        Generate dummy system note data for simulation purposes.
+        """
+        if not self.available_qubit_indices:
+            self.load_qubit_index_list()
+
+        dummy_note: dict = {
+            "average_gate_fidelity": {},
+            "readout": {},
+            "t1": {},
+            "t2": {},
+            "cr_params": {},
+        }
+
+        # Generate dummy data for each qubit
+        for qubit in self.available_qubit_indices:
+            qubit_key = f"Q{qubit:02}"
+            # Set high fidelity values for simulation
+            dummy_note["average_gate_fidelity"][qubit_key] = 0.999
+            dummy_note["readout"][qubit_key] = {
+                "prob_meas1_prep0": 0.001,
+                "prob_meas0_prep1": 0.001,
+                "readout_assignment_error": 0.001,
+            }
+            dummy_note["t1"][qubit_key] = 100.0  # microseconds
+            dummy_note["t2"][qubit_key] = 100.0  # microseconds
+
+        # Generate dummy data for couplings
+        for i in range(len(self.available_qubit_indices)):
+            for j in range(i + 1, len(self.available_qubit_indices)):
+                q1 = self.available_qubit_indices[i]
+                q2 = self.available_qubit_indices[j]
+                coupling_key = f"Q{q1:02}-Q{q2:02}"
+                dummy_note["cr_params"][coupling_key] = {"fidelity": 0.99}
+
+        return dummy_note
+
     def load_system_note(self) -> None:
         """
         Set the calibration/system note information.
-        If a dictionary is provided, use it directly; if a file path is provided, load from the JSON file.
+        For simulator mode, always use dummy data regardless of provided system note.
+        For real device mode, use provided data or load from file.
         """
-        if self.system_note is not None:
-            return  # Data is already provided as a dictionary.
-        elif self.system_note_file is not None:
-            try:
-                with open(self.system_note_file, "r") as f:
-                    self.system_note = json.load(f)
-            except Exception as e:
-                logger.error(f"Failed to load system note from file: {e}")
-                raise
+        if self.is_simulator:
+            # Always use dummy data in simulator mode for ideal values
+            self.system_note = self._generate_dummy_system_note()
+            logger.info("Using dummy calibration data for simulator mode")
+        else:
+            if self.system_note is not None:
+                return  # Data is already provided as a dictionary
+            elif self.system_note_file is not None:
+                try:
+                    with open(self.system_note_file, "r") as f:
+                        self.system_note = json.load(f)
+                except Exception as e:
+                    logger.error(f"Failed to load system note from file: {e}")
+                    raise
 
     def generate_mapping_and_pos(self) -> None:
         """
@@ -211,95 +261,61 @@ class DeviceInfoGenerator:
         """
         self.load_system_note()
 
-        calibrated_qubits = list(
-            self.system_note.get("average_gate_fidelity", {}).keys()
-        )
         for virtual_node in list(self.graph.nodes()):
             physical_node = self.map_virtual_to_physical(virtual_node)
-            if virtual_node not in calibrated_qubits:
-                logger.info(f"Qubit {virtual_node} is not calibrated.")
-                node_data = {
-                    "id": virtual_node,
-                    "physical_id": physical_node,
-                    "position": {
-                        "x": self.pos[virtual_node][0],
-                        "y": self.pos[virtual_node][1],
-                    },
-                    "fidelity": 0.0,
-                    "meas_error": {"prob_meas1_prep0": 0.0, "prob_meas0_prep1": 0.0},
-                    "qubit_lifetime": {"t1": 0.0, "t2": 0.0},
-                    "gate_duration": {
-                        gate: 0
-                        for gate in ("rz", "sx", "x")
-                        if gate in self.basis_gates_1q
-                    },
-                }
-            else:
-                node_data = {
-                    "id": virtual_node,
-                    "physical_id": physical_node,
-                    "position": {
-                        "x": self.pos[virtual_node][0],
-                        "y": self.pos[virtual_node][1],
-                    },
-                    "fidelity": self.system_note["average_gate_fidelity"].get(
-                        f"Q{physical_node:02}", 0.0
-                    ),
-                    "meas_error": {
-                        "prob_meas1_prep0": self.system_note["readout"]
-                        .get(f"Q{physical_node:02}", {})
-                        .get("prob_meas1_prep0", 0.0),
-                        "prob_meas0_prep1": self.system_note["readout"]
-                        .get(f"Q{physical_node:02}", {})
-                        .get("prob_meas0_prep1", 0.0),
-                        "readout_assignment_error": self.system_note["readout"]
-                        .get(f"Q{physical_node:02}", {})
-                        .get("readout_assignment_error", 0.0),
-                    },
-                    "qubit_lifetime": {
-                        "t1": self.system_note["t1"].get(f"Q{physical_node:02}", 0.0),
-                        "t2": self.system_note["t2"].get(f"Q{physical_node:02}", 0.0),
-                    },
-                    "gate_duration": {
-                        gate: 0
-                        for gate in ("rz", "sx", "x")
-                        if gate in self.basis_gates_1q
-                    },
-                }
-            self.graph.nodes[virtual_node].update(node_data)
+            physical_key = f"Q{physical_node:02}"
 
-        calibrated_edges = []
-        for key in self.system_note.get("cr_params", {}).keys():
-            parts = key.split("-")
-            if len(parts) == 2:
-                calibrated_edges.append((parts[0], parts[1]))
+            # Always use the system note data, which will be either real calibration data
+            # or dummy data for simulator mode
+            node_data = {
+                "id": virtual_node,
+                "physical_id": physical_node,
+                "position": {
+                    "x": self.pos[virtual_node][0],
+                    "y": self.pos[virtual_node][1],
+                },
+                "fidelity": self.system_note["average_gate_fidelity"].get(
+                    physical_key, 0.0
+                ),
+                "meas_error": {
+                    "prob_meas1_prep0": self.system_note["readout"]
+                    .get(physical_key, {})
+                    .get("prob_meas1_prep0", 0.0),
+                    "prob_meas0_prep1": self.system_note["readout"]
+                    .get(physical_key, {})
+                    .get("prob_meas0_prep1", 0.0),
+                    "readout_assignment_error": self.system_note["readout"]
+                    .get(physical_key, {})
+                    .get("readout_assignment_error", 0.0),
+                },
+                "qubit_lifetime": {
+                    "t1": self.system_note["t1"].get(physical_key, 0.0),
+                    "t2": self.system_note["t2"].get(physical_key, 0.0),
+                },
+                "gate_duration": {
+                    gate: 20
+                    for gate in ("rz", "sx", "x")
+                    if gate in self.basis_gates_1q
+                },
+            }
+            self.graph.nodes[virtual_node].update(node_data)
 
         for u, v in list(self.graph.edges()):
             physical_u = self.map_virtual_to_physical(u)
             physical_v = self.map_virtual_to_physical(v)
-            if (f"Q{physical_u:02}", f"Q{physical_v:02}") in calibrated_edges:
-                edge_data = {
-                    "control": u,
-                    "target": v,
-                    "fidelity": 0.0,
-                    "gate_duration": {
-                        gate: 0
-                        for gate in ("cx", "rzx90")
-                        if gate in self.basis_gates_2q
-                    },
-                }
-            else:
-                logger.info(f"Coupling {u}-{v} is not calibrated.")
-                edge_data = {
-                    "control": u,
-                    "target": v,
-                    "fidelity": 0.0,
-                    "gate_duration": {
-                        gate: 0
-                        for gate in ("cx", "rzx90")
-                        if gate in self.basis_gates_2q
-                    },
-                }
+            coupling_key = f"Q{physical_u:02}-Q{physical_v:02}"
+
+            # Use system note data for edge properties
+            edge_data = {
+                "control": u,
+                "target": v,
+                "fidelity": self.system_note.get("cr_params", {})
+                .get(coupling_key, {})
+                .get("fidelity", 0.99),
+                "gate_duration": {
+                    gate: 40 for gate in ("cx", "rzx90") if gate in self.basis_gates_2q
+                },
+            }
             self.graph.edges[u, v].update(edge_data)
 
     def dump_topology_json(self, output_json_file: str, indent: int = 2) -> None:
@@ -400,53 +416,11 @@ def _parse_args() -> argparse.Namespace:
         description="Generate device topology information."
     )
     parser.add_argument(
-        "--device-id",
+        "-c",
+        "--config",
         type=str,
-        default="1",
-        help="Device ID.",
-    )
-    # Direct data can be provided as a comma-separated list.
-    parser.add_argument(
-        "--qubit-index-list",
-        type=str,
-        default=None,
-        help="Comma-separated list of qubit indices (e.g., '0,1,2,3').",
-    )
-    parser.add_argument(
-        "--qubit-index-list-file",
-        type=str,
-        default="tool/qubit_index_list.csv",
-        help="Path to the CSV file containing qubit indices.",
-    )
-    # Direct system note data can be provided as a JSON string.
-    parser.add_argument(
-        "--system-note",
-        type=str,
-        default=None,
-        help="JSON string containing system note information.",
-    )
-    parser.add_argument(
-        "--system-note-file",
-        type=str,
-        default="tool/.system_note.json",
-        help="Path to the JSON file containing system note information.",
-    )
-    parser.add_argument(
-        "--output-json",
-        type=str,
-        default="config/_device_topology.json",
-        help="Output JSON file path.",
-    )
-    parser.add_argument(
-        "--output-png",
-        type=str,
-        default="config/_device_topology.png",
-        help="Output PNG file path.",
-    )
-    parser.add_argument(
-        "--save",
-        action="store_true",
-        help="Flag to save the output files.",
+        default="config/config.yaml",
+        help="Path to the server configuration file (YAML format).",
     )
     return parser.parse_args()
 
@@ -454,41 +428,30 @@ def _parse_args() -> argparse.Namespace:
 def main() -> None:
     args = _parse_args()
 
-    # If direct qubit index list data is provided, parse it as a list of ints.
-    if args.qubit_index_list is not None:
-        try:
-            qubit_index_list = [
-                int(x.strip()) for x in args.qubit_index_list.split(",")
-            ]
-        except Exception as e:
-            logger.error(f"Failed to parse qubit index list: {e}")
-            raise
-    else:
-        qubit_index_list = None
+    # Load configuration from YAML file
+    with Path(args.config).open("r", encoding="utf-8") as file:
+        config = yaml.safe_load(file)
 
-    # If direct system note data is provided, parse it as a dictionary.
-    if args.system_note is not None:
-        try:
-            system_note = json.loads(args.system_note)
-        except Exception as e:
-            logger.error(f"Failed to parse system note JSON string: {e}")
-            raise
-    else:
-        system_note = None
+    # Extract configuration values
+    device_id = config["device_info"]["device_id"]
+    is_simulator = config["simulator_mode"]
+    qubit_index_list_path = config["qubit_index_list_path"]
+    device_topology_json_path = config["device_topology_json_path"]
+
+    # Generate PNG file path from JSON path
+    device_topology_png_path = device_topology_json_path.replace(".json", ".png")
 
     generator = DeviceInfoGenerator(
-        device_id=args.device_id,
+        device_id=device_id,
         basis_gates_1q=["rz", "sx", "x"],
         basis_gates_2q=["cx", "rzx90"],
-        qubit_index_list=qubit_index_list,
-        qubit_index_list_file=args.qubit_index_list_file,
-        system_note=system_note,
-        system_note_file=args.system_note_file,
+        qubit_index_list_file=qubit_index_list_path,
+        is_simulator=is_simulator,
     )
     generator.generate_device_topology(
-        output_json_file=args.output_json,
-        output_png_file=args.output_png,
-        save=args.save,
+        output_json_file=device_topology_json_path,
+        output_png_file=device_topology_png_path,
+        save=True,
     )
 
 

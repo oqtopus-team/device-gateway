@@ -4,12 +4,17 @@ repo_url: "https://github.com/oqtopus-team/device-gateway"
 nav:
   - Home: index.md
   - Developer Guidelines:
+      - Development Flow: developer_guidelines/index.md
+      - Setup Development Environment: developer_guidelines/setup.md
+      - Getting Started: developer_guidelines/getting_started.md
       - How to Contribute: CONTRIBUTING.md
       - Code of Conduct: CODE_OF_CONDUCT.md
       - Security: SECURITY.md
 
 theme:
   name: material
+  logo: image/oqtopus_icon.png
+  favicon: image/oqtopus_favicon.png
   palette:
     primary: "indigo"
     accent: "indigo"
