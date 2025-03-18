@@ -59,7 +59,9 @@ class QulacsCircuit(BaseCircuit):
             f"Applying RZ gate: {self._backend.virtual_qubit(target)}, Physical qubit: {target}, angle={angle}"
         )
         new_circuit = circuit.copy()
-        new_circuit.add_RZ_gate(self._backend.physical_virtual_qubits[target], angle)
+        new_circuit.add_RZ_gate(
+            self._backend.physical_virtual_qubits[target], -1 * angle
+        )
         return new_circuit
 
     def compile(self, qc: QiskitQuantumCircuit) -> QulacsQuantumCircuit:
