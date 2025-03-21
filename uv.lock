@@ -189,7 +189,7 @@ wheels = [
 
 [[package]]
 name = "device-gateway"
-version = "0.1.2"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "grpcio" },
