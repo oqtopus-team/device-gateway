@@ -3,11 +3,7 @@ clean: true
 plugins:
   - remote: buf.build/grpc/python:v1.71.0
     out: ../src/device_gateway/gen
-    # opt:
-    #   - module=device_gateway.qpu_interface.v2
   - remote: buf.build/protocolbuffers/python:v30.1
     out: ../src/device_gateway/gen
 inputs:
   - directory: .
-    # opt:
-    #   - module=device_gateway.qpu_interface.v2
