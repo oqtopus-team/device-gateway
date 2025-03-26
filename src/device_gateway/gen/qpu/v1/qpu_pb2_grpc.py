@@ -3,7 +3,7 @@
 
 import grpc
 
-from qpu_interface.v1 import qpu_pb2 as qpu__interface_dot_v1_dot_qpu__pb2
+from device_gateway.gen.qpu.v1 import qpu_pb2 as qpu_dot_v1_dot_qpu__pb2
 
 
 class QpuServiceStub(object):
@@ -17,20 +17,20 @@ class QpuServiceStub(object):
         """
         self.GetDeviceInfo = channel.unary_unary(
             "/qpu_interface.v1.QpuService/GetDeviceInfo",
-            request_serializer=qpu__interface_dot_v1_dot_qpu__pb2.GetDeviceInfoRequest.SerializeToString,
-            response_deserializer=qpu__interface_dot_v1_dot_qpu__pb2.GetDeviceInfoResponse.FromString,
+            request_serializer=qpu_dot_v1_dot_qpu__pb2.GetDeviceInfoRequest.SerializeToString,
+            response_deserializer=qpu_dot_v1_dot_qpu__pb2.GetDeviceInfoResponse.FromString,
             _registered_method=True,
         )
         self.GetServiceStatus = channel.unary_unary(
             "/qpu_interface.v1.QpuService/GetServiceStatus",
-            request_serializer=qpu__interface_dot_v1_dot_qpu__pb2.GetServiceStatusRequest.SerializeToString,
-            response_deserializer=qpu__interface_dot_v1_dot_qpu__pb2.GetServiceStatusResponse.FromString,
+            request_serializer=qpu_dot_v1_dot_qpu__pb2.GetServiceStatusRequest.SerializeToString,
+            response_deserializer=qpu_dot_v1_dot_qpu__pb2.GetServiceStatusResponse.FromString,
             _registered_method=True,
         )
         self.CallJob = channel.unary_unary(
             "/qpu_interface.v1.QpuService/CallJob",
-            request_serializer=qpu__interface_dot_v1_dot_qpu__pb2.CallJobRequest.SerializeToString,
-            response_deserializer=qpu__interface_dot_v1_dot_qpu__pb2.CallJobResponse.FromString,
+            request_serializer=qpu_dot_v1_dot_qpu__pb2.CallJobRequest.SerializeToString,
+            response_deserializer=qpu_dot_v1_dot_qpu__pb2.CallJobResponse.FromString,
             _registered_method=True,
         )
 
@@ -61,18 +61,18 @@ def add_QpuServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
         "GetDeviceInfo": grpc.unary_unary_rpc_method_handler(
             servicer.GetDeviceInfo,
-            request_deserializer=qpu__interface_dot_v1_dot_qpu__pb2.GetDeviceInfoRequest.FromString,
-            response_serializer=qpu__interface_dot_v1_dot_qpu__pb2.GetDeviceInfoResponse.SerializeToString,
+            request_deserializer=qpu_dot_v1_dot_qpu__pb2.GetDeviceInfoRequest.FromString,
+            response_serializer=qpu_dot_v1_dot_qpu__pb2.GetDeviceInfoResponse.SerializeToString,
         ),
         "GetServiceStatus": grpc.unary_unary_rpc_method_handler(
             servicer.GetServiceStatus,
-            request_deserializer=qpu__interface_dot_v1_dot_qpu__pb2.GetServiceStatusRequest.FromString,
-            response_serializer=qpu__interface_dot_v1_dot_qpu__pb2.GetServiceStatusResponse.SerializeToString,
+            request_deserializer=qpu_dot_v1_dot_qpu__pb2.GetServiceStatusRequest.FromString,
+            response_serializer=qpu_dot_v1_dot_qpu__pb2.GetServiceStatusResponse.SerializeToString,
         ),
         "CallJob": grpc.unary_unary_rpc_method_handler(
             servicer.CallJob,
-            request_deserializer=qpu__interface_dot_v1_dot_qpu__pb2.CallJobRequest.FromString,
-            response_serializer=qpu__interface_dot_v1_dot_qpu__pb2.CallJobResponse.SerializeToString,
+            request_deserializer=qpu_dot_v1_dot_qpu__pb2.CallJobRequest.FromString,
+            response_serializer=qpu_dot_v1_dot_qpu__pb2.CallJobResponse.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -105,8 +105,8 @@ class QpuService(object):
             request,
             target,
             "/qpu_interface.v1.QpuService/GetDeviceInfo",
-            qpu__interface_dot_v1_dot_qpu__pb2.GetDeviceInfoRequest.SerializeToString,
-            qpu__interface_dot_v1_dot_qpu__pb2.GetDeviceInfoResponse.FromString,
+            qpu_dot_v1_dot_qpu__pb2.GetDeviceInfoRequest.SerializeToString,
+            qpu_dot_v1_dot_qpu__pb2.GetDeviceInfoResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -135,8 +135,8 @@ class QpuService(object):
             request,
             target,
             "/qpu_interface.v1.QpuService/GetServiceStatus",
-            qpu__interface_dot_v1_dot_qpu__pb2.GetServiceStatusRequest.SerializeToString,
-            qpu__interface_dot_v1_dot_qpu__pb2.GetServiceStatusResponse.FromString,
+            qpu_dot_v1_dot_qpu__pb2.GetServiceStatusRequest.SerializeToString,
+            qpu_dot_v1_dot_qpu__pb2.GetServiceStatusResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -165,8 +165,8 @@ class QpuService(object):
             request,
             target,
             "/qpu_interface.v1.QpuService/CallJob",
-            qpu__interface_dot_v1_dot_qpu__pb2.CallJobRequest.SerializeToString,
-            qpu__interface_dot_v1_dot_qpu__pb2.CallJobResponse.FromString,
+            qpu_dot_v1_dot_qpu__pb2.CallJobRequest.SerializeToString,
+            qpu_dot_v1_dot_qpu__pb2.CallJobResponse.FromString,
             options,
             channel_credentials,
             insecure,

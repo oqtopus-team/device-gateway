@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package qpu_interface.v1;
+
+service QpuService {
+  rpc GetDeviceInfo(GetDeviceInfoRequest) returns (GetDeviceInfoResponse) {}
+  rpc GetServiceStatus(GetServiceStatusRequest) returns (GetServiceStatusResponse) {}
+  rpc CallJob(CallJobRequest) returns (CallJobResponse) {}
+}
+
+// rpc GetDeviceInfo
+message GetDeviceInfoRequest {}
+
+message GetDeviceInfoResponse {
+  DeviceInfo body = 1;
+}
+
+message DeviceInfo {
+  string device_id = 1;
+  string provider_id = 2;
+  string type = 3;
+  uint32 max_qubits = 4;
+  uint32 max_shots = 5;
+  string device_info = 6;
+  string calibrated_at = 7;
+}
+
+// rpc GetServiceStatus
+message GetServiceStatusRequest {}
+
+message GetServiceStatusResponse {
+  ServiceStatus service_status = 1;
+}
+
+enum ServiceStatus {
+  SERVICE_STATUS_ACTIVE = 0;
+  SERVICE_STATUS_INACTIVE = 1;
+  SERVICE_STATUS_MAINTENANCE = 2;
+}
+
+// rpc CallJob
+message CallJobRequest {
+  string job_id = 1;
+  uint32 shots = 2;
+  string program = 3;
+}
+
+message CallJobResponse {
+  JobStatus status = 1;
+  Result result = 2;
+}
+
+enum JobStatus {
+  JOB_STATUS_SUCCESS = 0;
+  JOB_STATUS_FAILURE = 1;
+  JOB_STATUS_INACTIVE = 2;
+}
+
+message Result {
+  // {key: observed_values, value: counts}
+  // If counts = 0, the entry is not registered.
+  // Numbers in a observed_values are ordered from the lowest to the highest.
+  // e.g.
+  // {key: "00101011", value: 23441}
+  map<string, uint32> counts = 1;
+  string message = 2;
+}

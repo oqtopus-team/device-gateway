@@ -10,10 +10,10 @@ import grpc
 import yaml  # type: ignore[import]
 from grpc_reflection.v1alpha import reflection
 from qiskit.qasm3 import loads
-from qpu_interface.v1 import qpu_pb2, qpu_pb2_grpc
 
 from device_gateway.backend.qulacs_backend import QulacsBackend
 from device_gateway.circuit.qulacs_circuit import QulacsCircuit
+from device_gateway.gen.qpu.v1 import qpu_pb2, qpu_pb2_grpc
 
 logger = logging.getLogger("device_gateway")
 
