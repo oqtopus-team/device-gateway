@@ -17,6 +17,6 @@ COPY . /app
 RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app
 USER appuser
 # install python dependencies
-RUN uv sync
+RUN uv sync --no-dev
 # run application
 CMD ["uv", "run", "python", "src/device_gateway/service.py", "-c", "config/config.yaml", "-l", "config/logging.yaml"]

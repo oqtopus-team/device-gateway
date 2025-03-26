@@ -1,4 +1,4 @@
-![OQTOPUS](./asset/oqtopus_logo.png)
+![OQTOPUS](./asset/oqtopus-banner.png)
 
 # Device Gateway
 

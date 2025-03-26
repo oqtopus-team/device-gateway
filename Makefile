@@ -2,7 +2,19 @@ SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
 
-.PHONY:
+PROTO_URL := https://raw.githubusercontent.com/oqtopus-team/oqtopus-engine/main/spec/proto/qpu_interface/v1/qpu.proto
+SPEC_DIR := spec
+PROTO_FILE := $(SPEC_DIR)/qpu.proto
+
+.PHONY: proto-download proto-generate proto-clean
+
+proto-download: ## Download proto file from oqtopus-engine
+	@echo "Downloading proto file..."
+	@curl -s $(PROTO_URL) -o $(PROTO_FILE)
+
+proto-generate: proto-download ## Generate gRPC code from proto file
+	@echo "Generating gRPC code..."
+	@cd $(SPEC_DIR) && MAKE generate-qpu
 
 list-service: ## List all services
 	@grpcurl -plaintext localhost:50051 list
