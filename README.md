@@ -3,6 +3,7 @@
 # Device Gateway
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![slack](https://img.shields.io/badge/slack-OQTOPUS-pink.svg?logo=slack&style=plastic")](https://oqtopus.slack.com/archives/C08JKNVHU8P)
 
 ## Overview
 
@@ -27,6 +28,10 @@ Citation information is also available in the [CITATION](https://github.com/oqto
 You can contact us by creating an issue in this repository or by email:
 
 - [oqtopus-team[at]googlegroups.com](mailto:oqtopus-team[at]googlegroups.com)
+
+or you can join our Slack workspace:
+
+[![slack](https://img.shields.io/badge/slack-OQTOPUS-pink.svg?logo=slack&style=plastic")](https://oqtopus.slack.com/archives/C08JKNVHU8P)
 
 ## License
 
