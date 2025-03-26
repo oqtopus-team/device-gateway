@@ -24,7 +24,7 @@ USER appuser
 COPY . /app
 
 # install python dependencies
-RUN uv sync
+RUN uv sync --no-dev
 
 # run application
 CMD ["uv", "run", "python", "src/device_gateway/service.py", "-c", "config/config.yaml", "-l", "config/logging.yaml"]
