@@ -119,6 +119,9 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             logger.info("GetDeviceInfo is started.")
             response_parameters = self._config["device_info"]
             response_parameters["device_info"] = json.dumps(self.device_topology_json)
+            response_parameters["calibrated_at"] = json.dumps(
+                self.device_topology_json["calibrated_at"]
+            )
             device_info = qpu_pb2.DeviceInfo(**response_parameters)  # type: ignore[attr-defined]
             response = qpu_pb2.GetDeviceInfoResponse(  # type: ignore[attr-defined]
                 body=device_info
