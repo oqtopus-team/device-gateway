@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import logging.config
+import os
 import time
 from concurrent import futures
 from pathlib import Path
@@ -28,7 +29,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             raise NotImplementedError("Qubex is not implemented yet.")
 
     @property
-    def device_topology_json(self):
+    def device_topology_dict(self):
         with open(self._config["device_topology_json_path"]) as f:
             device_topology = json.load(f)
         return device_topology
@@ -39,7 +40,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
 
     @property
     def virtual_physical_map(self):
-        device_topology = self.device_topology_json
+        device_topology = self.device_topology_dict
         qubits = {
             qubit["id"]: qubit["physical_id"] for qubit in device_topology["qubits"]
         }
@@ -101,7 +102,6 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             # build response parameters
             response_parameters = {
                 "service_status": service_status,
-                "device_info_timestamp": self.device_topology_json["timestamp"],
             }
             response = qpu_pb2.GetServiceStatusResponse(**response_parameters)
         except Exception:
@@ -118,9 +118,9 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         try:
             logger.info("GetDeviceInfo is started.")
             response_parameters = self._config["device_info"]
-            response_parameters["device_info"] = json.dumps(self.device_topology_json)
+            response_parameters["device_info"] = json.dumps(self.device_topology_dict)
             response_parameters["calibrated_at"] = json.dumps(
-                self.device_topology_json["calibrated_at"]
+                self.device_topology_dict["calibrated_at"]
             )
             device_info = qpu_pb2.DeviceInfo(**response_parameters)  # type: ignore[attr-defined]
             response = qpu_pb2.GetDeviceInfoResponse(  # type: ignore[attr-defined]
@@ -134,11 +134,31 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             return response
 
 
+def assign_environ(config: dict) -> dict:
+    """Expand environment variables and the user directory "~" in the values of `dict`.
+
+    Args:
+        config (dict): `dict` that expands environment variables
+            and the user directory "~" in its values.
+
+    Returns:
+        dict: expanded `dict`.
+
+    """
+    for key, value in config.items():
+        if type(value) is dict:
+            config[key] = assign_environ(value)
+        elif type(value) is str:
+            tmp_value = str(os.path.expandvars(value))
+            config[key] = os.path.expanduser(tmp_value)  # noqa: PTH111
+    return config
+
+
 def serve(config_yaml_path: str, logging_yaml_path: str):
     with Path(config_yaml_path).open("r", encoding="utf-8") as file:
-        config_yaml = yaml.safe_load(file)
+        config_yaml = assign_environ(yaml.safe_load(file))
     with Path(logging_yaml_path).open("r", encoding="utf-8") as file:
-        logging_yaml = yaml.safe_load(file)
+        logging_yaml = assign_environ(yaml.safe_load(file))
         logging.config.dictConfig(logging_yaml)
 
     max_workers = config_yaml["proto"].get("max_workers", 10)

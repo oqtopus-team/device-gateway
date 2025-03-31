@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./logs:/app/logs
+      - ./config:/app/config
     environment:
       - PYTHONUNBUFFERED=1
     ports:
