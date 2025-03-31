@@ -1,6 +1,6 @@
 {
-  "name": "test_device",
-  "device_id": "1",
+  "name": "qulacs",
+  "device_id": "qiqb",
   "qubits": [
     {
       "id": 0,
