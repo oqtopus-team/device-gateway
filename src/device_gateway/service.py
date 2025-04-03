@@ -12,7 +12,9 @@ import yaml  # type: ignore[import]
 from grpc_reflection.v1alpha import reflection
 from qiskit.qasm3 import loads
 
+from device_gateway.backend.qubex_backend import QubexBackend
 from device_gateway.backend.qulacs_backend import QulacsBackend
+from device_gateway.circuit.qubex_circuit import QubexCircuit
 from device_gateway.circuit.qulacs_circuit import QulacsCircuit
 from device_gateway.gen.qpu.v1 import qpu_pb2, qpu_pb2_grpc
 
@@ -26,7 +28,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         if self._config["simulator_mode"]:
             self._qulacs = QulacsBackend(self.virtual_physical_map)
         else:
-            raise NotImplementedError("Qubex is not implemented yet.")
+            self._qubex = QubexBackend(self.virtual_physical_map)
 
     @property
     def device_topology_dict(self):
@@ -62,7 +64,8 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                 qulacs_circuit = QulacsCircuit(self._qulacs).compile(qc)
                 counts = self._qulacs.execute(qulacs_circuit, shots=request.shots)
             else:
-                raise NotImplementedError("Qubex is not implemented yet.")
+                qubex_circuit = QubexCircuit(self._qubex).compile(qc)
+                counts = self._qubex.execute(qubex_circuit, shots=request.shots)
             message = "job is succeeded"
             result = qpu_pb2.Result(counts=counts, message=message)  # type: ignore[attr-defined]
             response = qpu_pb2.CallJobResponse(  # type: ignore[attr-defined]

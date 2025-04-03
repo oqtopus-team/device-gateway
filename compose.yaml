@@ -6,8 +6,9 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./config:/app/config
+      - ./qubex_config:/app/qubex_config
     environment:
       - PYTHONUNBUFFERED=1
     ports:
-      - "50051:50051"
+      - "50052:50052"
     restart: unless-stopped
