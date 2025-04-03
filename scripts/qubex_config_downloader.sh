@@ -11,3 +11,14 @@ curl -X GET "${API_URL}/calibration/note" \
   -H 'X-Username: orangekame3' | jq '.note' > qubex_config/calib_note.json
 
 echo "Process complete. 'calib_note.json' has been created."
+
+
+echo "Downloading Qubex configuration..."
+mkdir -p ./tmp
+curl -X 'GET' \
+  "${API_URL}/file/zip?path=%2Fapp%2Fconfig%2F" \
+  -H 'accept: */*' \
+  --output ./tmp/config.zip
+unzip -o ./tmp/config.zip -d ./qubex_config/
+rm -rf ./tmp/config.zip
+echo "Downloading Qubex configuration..."
