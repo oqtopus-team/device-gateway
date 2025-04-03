@@ -29,10 +29,9 @@ class QubexBackend(BaseBackend):
         The compiled_circuit is produced by the Circuit class.
         """
         logger.info(f"Executing quantum circuit with {shots} shots")
-        initial_states = {qubit: "0" for qubit in self.qubits}
+
         return self._experiment.measure(
             circuit,
-            initial_states=initial_states,
             mode="single",
             shots=shots,
             interval=DEFAULT_INTERVAL,

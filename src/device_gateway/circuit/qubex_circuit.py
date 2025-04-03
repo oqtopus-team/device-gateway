@@ -82,9 +82,45 @@ class QubexCircuit(BaseCircuit):
         circuit.call(ps)
         return circuit
 
+    def _used_physical_qubits_and_couplings(self, qc: QiskitQuantumCircuit):
+        """Return the used physical qubits and couplings."""
+        used_physical_qubits = set()
+        used_physical_couplings = set()
+
+        for instruction in qc.data:
+            name = instruction.name
+            if name not in SUPPORTED_GATES:
+                logger.error(f"Unsupported instruction: {name}")
+                raise ValueError(f"Unsupported instruction: {name}")
+
+            virtual_index = qc.find_bit(instruction.qubits[0]).index
+            physical_label = self._backend.physical_qubit(virtual_index)
+            used_physical_qubits.add(physical_label)
+
+            if name == "cx":
+                virtual_target_index = qc.find_bit(instruction.qubits[1]).index
+                physical_target_label = self._backend.physical_qubit(
+                    virtual_target_index
+                )
+                used_physical_qubits.add(physical_target_label)
+                coupling = f"{physical_label}-{physical_target_label}"
+                used_physical_couplings.add(coupling)
+
+        return used_physical_qubits, used_physical_couplings
+
     def compile(self, qc: QiskitQuantumCircuit) -> PulseSchedule:
         """Load a QASM 3 program and apply the corresponding gates to the circuit."""
-        circuit = PulseSchedule(self._backend.qubits + self._backend.couplings)
+        used_physical_qubits, used_physical_couplings = (
+            self._used_physical_qubits_and_couplings(qc)
+        )
+        used_physical_qubits_list = list(used_physical_qubits)
+        used_physical_couplings_list = list(used_physical_couplings)
+        logger.info(f"used_physical_qubits: {used_physical_qubits_list}")
+        logger.info(f"used_physical_couplings: {used_physical_couplings_list}")
+        logger.info(f"virtual_physical_map: {self._backend._virtual_physical_map}")
+        circuit = PulseSchedule(
+            used_physical_qubits_list + used_physical_couplings_list
+        )
         for instruction in qc.data:
             name = instruction.name
             if name not in SUPPORTED_GATES:
@@ -111,4 +147,5 @@ class QubexCircuit(BaseCircuit):
                 pass
             else:
                 pass
+
         return circuit
