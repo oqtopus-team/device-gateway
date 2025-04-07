@@ -2,7 +2,6 @@
 
 import logging
 
-import numpy as np
 from qiskit import QuantumCircuit as QiskitQuantumCircuit
 from qubex.pulse import PulseSchedule, VirtualZ
 
@@ -25,15 +24,16 @@ class QubexCircuit(BaseCircuit):
         logger.debug(
             f"Applying CX gate: {self._backend.virtual_qubit(control)} -> {self._backend.virtual_qubit(target)}, Physical qubits: {control} -> {target}"
         )
-        cr_label = f"{control}-{target}"
-        zx90_pulse = self._backend._experiment.zx90(control, target)
-        x90_pulse = self._backend._experiment.drag_hpi_pulse.get(
-            target, self._backend._experiment.hpi_pulse[target]
-        )
-        with PulseSchedule([control, cr_label, target]) as ps:
-            ps.call(zx90_pulse)
-            ps.add(control, VirtualZ(-np.pi / 2))
-            ps.add(target, x90_pulse.scaled(-1))
+        # cr_label = f"{control}-{target}"
+        # zx90_pulse = self._backend._experiment.zx90(control, target)
+        # x90_pulse = self._backend._experiment.drag_hpi_pulse.get(
+        #     target, self._backend._experiment.hpi_pulse[target]
+        # )
+        with PulseSchedule([control, target]) as ps:
+            # ps.call(zx90_pulse)
+            # ps.add(control, VirtualZ(-np.pi / 2))
+            # ps.add(target, x90_pulse.scaled(-1))
+            ps.call(self._backend._experiment.cx(control, target))
         circuit.call(ps)
         return circuit
 
@@ -45,11 +45,11 @@ class QubexCircuit(BaseCircuit):
         logger.debug(
             f"Applying SX gate: {self._backend.virtual_qubit(target)}, Physical qubit: {target}"
         )
-        x90_pulse = self._backend._experiment.drag_hpi_pulse.get(
-            target, self._backend._experiment.drag_hpi_pulse[target]
-        )
+        # x90_pulse = self._backend._experiment.drag_hpi_pulse.get(
+        #     target, self._backend._experiment.drag_hpi_pulse[target]
+        # )
         with PulseSchedule([target]) as ps:
-            ps.add(target, x90_pulse)
+            ps.add(target, self._backend._experiment.x90(target))
         circuit.call(ps)
         return circuit
 
@@ -61,11 +61,11 @@ class QubexCircuit(BaseCircuit):
         logger.debug(
             f"Applying X gate: {self._backend.virtual_qubit(target)}, Physical qubit: {target}"
         )
-        x180_pulse = self._backend._experiment.drag_pi_pulse.get(
-            target, self._backend._experiment.drag_pi_pulse[target]
-        )
+        # x180_pulse = self._backend._experiment.drag_pi_pulse.get(
+        #     target, self._backend._experiment.drag_pi_pulse[target]
+        # )
         with PulseSchedule([target]) as ps:
-            ps.add(target, x180_pulse)
+            ps.add(target, self._backend._experiment.x180(target))
         circuit.call(ps)
         return circuit
 
@@ -106,21 +106,26 @@ class QubexCircuit(BaseCircuit):
                 coupling = f"{physical_label}-{physical_target_label}"
                 used_physical_couplings.add(coupling)
 
-        return used_physical_qubits, used_physical_couplings
+        # Convert sets to sorted lists
+        # Sort physical qubits based on their virtual qubit indices
+        physical_to_virtual = self._backend.physical_virtual_qubits
+        sorted_physical_qubits = sorted(
+            list(used_physical_qubits), key=lambda x: physical_to_virtual[x]
+        )
+        sorted_physical_couplings = sorted(list(used_physical_couplings))
+
+        return sorted_physical_qubits, sorted_physical_couplings
 
     def compile(self, qc: QiskitQuantumCircuit) -> PulseSchedule:
         """Load a QASM 3 program and apply the corresponding gates to the circuit."""
         used_physical_qubits, used_physical_couplings = (
             self._used_physical_qubits_and_couplings(qc)
         )
-        used_physical_qubits_list = list(used_physical_qubits)
-        used_physical_couplings_list = list(used_physical_couplings)
-        logger.info(f"used_physical_qubits: {used_physical_qubits_list}")
-        logger.info(f"used_physical_couplings: {used_physical_couplings_list}")
+        self._backend._used_physical_qubits = used_physical_qubits
+        logger.info(f"used_physical_qubits: {used_physical_qubits}")
+        logger.info(f"used_physical_couplings: {used_physical_couplings}")
         logger.info(f"virtual_physical_map: {self._backend._virtual_physical_map}")
-        circuit = PulseSchedule(
-            used_physical_qubits_list + used_physical_couplings_list
-        )
+        circuit = PulseSchedule(used_physical_qubits + used_physical_couplings)
         for instruction in qc.data:
             name = instruction.name
             if name not in SUPPORTED_GATES:
