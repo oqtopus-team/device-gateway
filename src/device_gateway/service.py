@@ -28,13 +28,20 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         if self._config["simulator_mode"]:
             self._qulacs = QulacsBackend(self.virtual_physical_map)
         else:
-            self._qubex = QubexBackend(self.virtual_physical_map)
+            self._qubex = QubexBackend(
+                self.virtual_physical_map, device_topology=self.device_topology_dict
+            )
+            self._save_device_topology(self._qubex._device_topology)
 
     @property
     def device_topology_dict(self):
         with open(self._config["device_topology_json_path"]) as f:
             device_topology = json.load(f)
         return device_topology
+
+    def _save_device_topology(self, device_topology):
+        with open(self._config["device_topology_json_path"], "w") as f:
+            json.dump(device_topology, f)
 
     @property
     def device_status(self):
@@ -66,7 +73,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             else:
                 qubex_circuit = QubexCircuit(self._qubex).compile(qc)
                 result = self._qubex.execute(qubex_circuit, shots=request.shots)
-                migitate = True
+                migitate = False
                 if migitate:
                     counts = self._qubex.mitigate(result, shots=request.shots)
                 else:
@@ -128,9 +135,10 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             logger.info("GetDeviceInfo is started.")
             response_parameters = self._config["device_info"]
             response_parameters["device_info"] = json.dumps(self.device_topology_dict)
-            response_parameters["calibrated_at"] = json.dumps(
-                self.device_topology_dict["calibrated_at"]
-            )
+            response_parameters["calibrated_at"] = self.device_topology_dict[
+                "calibrated_at"
+            ]
+
             device_info = qpu_pb2.DeviceInfo(**response_parameters)  # type: ignore[attr-defined]
             response = qpu_pb2.GetDeviceInfoResponse(  # type: ignore[attr-defined]
                 body=device_info

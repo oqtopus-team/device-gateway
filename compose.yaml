@@ -2,7 +2,7 @@ services:
   device-gateway:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     volumes:
       - ./logs:/app/logs
       - ./config:/app/config
@@ -10,5 +10,5 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     ports:
-      - "50052:50052"
+      - "51021:51021"
     restart: unless-stopped

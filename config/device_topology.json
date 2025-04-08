@@ -6,13 +6,13 @@
       "id": 0,
       "physical_id": 4,
       "position": {
-        "x": 100,
-        "y": 366.6666666666667
+        "x": 0,
+        "y": 0.666666666666667
       },
       "fidelity": 0.9993601919755799,
       "meas_error": {
-        "prob_meas1_prep0": 0.2113037109375,
-        "prob_meas0_prep1": 0.198974609375,
+        "prob_meas1_prep0": 0.1807861328125,
+        "prob_meas0_prep1": 0.2115478515625,
         "readout_assignment_error": 0.20513916015625
       },
       "qubit_lifetime": {
@@ -29,13 +29,13 @@
       "id": 1,
       "physical_id": 5,
       "position": {
-        "x": 166.66666666666666,
-        "y": 366.6666666666667
+        "x": 0.6666666666666665,
+        "y": 0.666666666666667
       },
       "fidelity": 0.9992897886251894,
       "meas_error": {
-        "prob_meas1_prep0": 0.1256103515625,
-        "prob_meas0_prep1": 0.1591796875,
+        "prob_meas1_prep0": 0.126953125,
+        "prob_meas0_prep1": 0.1566162109375,
         "readout_assignment_error": 0.14239501953125
       },
       "qubit_lifetime": {
@@ -52,13 +52,13 @@
       "id": 2,
       "physical_id": 6,
       "position": {
-        "x": 100,
-        "y": 300
+        "x": 0,
+        "y": 0
       },
       "fidelity": 0.9979262757525021,
       "meas_error": {
-        "prob_meas1_prep0": 0.1636962890625,
-        "prob_meas0_prep1": 0.1898193359375,
+        "prob_meas1_prep0": 0.15576171875,
+        "prob_meas0_prep1": 0.1988525390625,
         "readout_assignment_error": 0.1767578125
       },
       "qubit_lifetime": {
@@ -75,13 +75,13 @@
       "id": 3,
       "physical_id": 7,
       "position": {
-        "x": 166.66666666666666,
-        "y": 300
+        "x": 0.6666666666666665,
+        "y": 0
       },
       "fidelity": 0.9994892768361061,
       "meas_error": {
-        "prob_meas1_prep0": 0.173828125,
-        "prob_meas0_prep1": 0.2181396484375,
+        "prob_meas1_prep0": 0.1785888671875,
+        "prob_meas0_prep1": 0.2347412109375,
         "readout_assignment_error": 0.19598388671875
       },
       "qubit_lifetime": {
@@ -121,5 +121,5 @@
       }
     }
   ],
-  "calibrated_at": "2025-04-03T05:29:32.778194Z"
+  "calibrated_at": "2025-04-04 15:55:25.146376"
 }
