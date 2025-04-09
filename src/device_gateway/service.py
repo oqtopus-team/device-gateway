@@ -72,12 +72,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                 counts = self._qulacs.execute(qulacs_circuit, shots=request.shots)
             else:
                 qubex_circuit = QubexCircuit(self._qubex).compile(qc)
-                result = self._qubex.execute(qubex_circuit, shots=request.shots)
-                migitate = False
-                if migitate:
-                    counts = self._qubex.mitigate(result, shots=request.shots)
-                else:
-                    counts = result.get_counts()
+                counts = self._qubex.execute(qubex_circuit, shots=request.shots)
 
             message = "job is succeeded"
             result = qpu_pb2.Result(counts=counts, message=message)  # type: ignore[attr-defined]

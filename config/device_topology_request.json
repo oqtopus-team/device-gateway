@@ -2,12 +2,10 @@
 	"name": "anemone",
 	"device_id": "anemone",
 	"qubits": [
-		"4",
-		"5",
-		"6",
-		"7"
+		"0",
+		"1",
+		"2",
+		"3"
 	],
-	"exclude_couplings": [
-		"4-6"
-	]
+	"exclude_couplings": []
 }
