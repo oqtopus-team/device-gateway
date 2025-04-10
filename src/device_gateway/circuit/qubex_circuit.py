@@ -16,7 +16,7 @@ class QubexCircuit(BaseCircuit):
     def __init__(self, backend: QubexBackend):
         self._backend = backend
 
-    def cx(self, circuit: PulseSchedule, control: str, target: str):
+    def cx(self, control: str, target: str):
         """Apply CX gate."""
         if target not in self._backend.qubits or control not in self._backend.qubits:
             logger.error(f"Invalid qubits for CNOT: {control}, {target}")
@@ -34,11 +34,10 @@ class QubexCircuit(BaseCircuit):
             # ps.add(control, VirtualZ(-np.pi / 2))
             # ps.add(target, x90_pulse.scaled(-1))
             ps.call(self._backend._experiment.cx(control, target))
-            ps.barrier()
-        circuit.call(ps)
-        return circuit
+        # ps.barrier()
+        return ps
 
-    def sx(self, circuit: PulseSchedule, target: str):
+    def sx(self, target: str):
         """Apply SX gate."""
         if target not in self._backend.qubits:
             logger.error(f"Invalid qubit: {target}")
@@ -51,11 +50,10 @@ class QubexCircuit(BaseCircuit):
         # )
         with PulseSchedule([target]) as ps:
             ps.add(target, self._backend._experiment.x90(target))
-            ps.barrier()
-        circuit.call(ps)
-        return circuit
+            # ps.barrier()
+        return ps
 
-    def x(self, circuit: PulseSchedule, target: str):
+    def x(self, target: str):
         """Apply X gate."""
         if target not in self._backend.qubits:
             logger.error(f"Invalid qubit: {target}")
@@ -68,11 +66,10 @@ class QubexCircuit(BaseCircuit):
         # )
         with PulseSchedule([target]) as ps:
             ps.add(target, self._backend._experiment.x180(target))
-            ps.barrier()
-        circuit.call(ps)
-        return circuit
+            # ps.barrier()
+        return ps
 
-    def rz(self, circuit: PulseSchedule, target: str, angle: float):
+    def rz(self, target: str, angle: float):
         """Apply RZ gate."""
         if target not in self._backend.qubits:
             logger.error(f"Invalid qubit: {target}")
@@ -82,9 +79,8 @@ class QubexCircuit(BaseCircuit):
         )
         with PulseSchedule([target]) as ps:
             ps.add(target, VirtualZ(angle))
-            ps.barrier()
-        circuit.call(ps)
-        return circuit
+            # ps.barrier()
+        return ps
 
     def _used_physical_qubits_and_couplings(self, qc: QiskitQuantumCircuit):
         """Return the used physical qubits and couplings."""
@@ -129,7 +125,8 @@ class QubexCircuit(BaseCircuit):
         logger.info(f"used_physical_qubits: {used_physical_qubits}")
         logger.info(f"used_physical_couplings: {used_physical_couplings}")
         logger.info(f"virtual_physical_map: {self._backend._virtual_physical_map}")
-        circuit = PulseSchedule(used_physical_qubits + used_physical_couplings)
+
+        ps_list = []
         for instruction in qc.data:
             name = instruction.name
             if name not in SUPPORTED_GATES:
@@ -140,21 +137,30 @@ class QubexCircuit(BaseCircuit):
             physical_label = self._backend.physical_qubit(virtual_index)
 
             if name == "x":
-                circuit = self.x(circuit, physical_label)
+                # circuit = self.x(circuit, physical_label)
+                ps_list.append(self.x(physical_label))
             elif name == "sx":
-                circuit = self.sx(circuit, physical_label)
+                # circuit = self.sx(circuit, physical_label)
+                ps_list.append(self.sx(physical_label))
             elif name == "rz":
                 angle = instruction.params[0]
-                circuit = self.rz(circuit, physical_label, angle)
+                # circuit = self.rz(circuit, physical_label, angle)
+                ps_list.append(self.rz(physical_label, angle))
             elif name == "cx":
                 virtual_target_index = qc.find_bit(instruction.qubits[1]).index
                 physical_target_label = self._backend.physical_qubit(
                     virtual_target_index
                 )
-                circuit = self.cx(circuit, physical_label, physical_target_label)
+                # circuit = self.cx(circuit, physical_label, physical_target_label)
+                ps_list.append(self.cx(physical_label, physical_target_label))
             elif name == "measure":
                 pass
             else:
                 pass
-
+            with PulseSchedule(
+                used_physical_qubits + used_physical_couplings
+            ) as circuit:
+                for ps in ps_list:
+                    circuit.call(ps)
+                    circuit.barrier()
         return circuit
