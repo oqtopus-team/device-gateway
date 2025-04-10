@@ -28,6 +28,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         if self._config["simulator_mode"]:
             self._qulacs = QulacsBackend(self.virtual_physical_map)
         else:
+            logger.info(f"virtual_physical_map={self.virtual_physical_map}")
             self._qubex = QubexBackend(
                 self.virtual_physical_map, device_topology=self.device_topology_dict
             )
@@ -66,6 +67,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             logger.info(f"CallJob is started. job_id={job_id}")
             simulator_mode = self._config["simulator_mode"]
             print("virtual_physical_map", self.virtual_physical_map)
+            logger.info(f"program={request.program}")
             qc = loads(request.program)
             if simulator_mode:
                 qulacs_circuit = QulacsCircuit(self._qulacs).compile(qc)

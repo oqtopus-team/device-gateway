@@ -34,6 +34,7 @@ class QubexCircuit(BaseCircuit):
             # ps.add(control, VirtualZ(-np.pi / 2))
             # ps.add(target, x90_pulse.scaled(-1))
             ps.call(self._backend._experiment.cx(control, target))
+            ps.barrier()
         circuit.call(ps)
         return circuit
 
@@ -50,6 +51,7 @@ class QubexCircuit(BaseCircuit):
         # )
         with PulseSchedule([target]) as ps:
             ps.add(target, self._backend._experiment.x90(target))
+            ps.barrier()
         circuit.call(ps)
         return circuit
 
@@ -66,6 +68,7 @@ class QubexCircuit(BaseCircuit):
         # )
         with PulseSchedule([target]) as ps:
             ps.add(target, self._backend._experiment.x180(target))
+            ps.barrier()
         circuit.call(ps)
         return circuit
 
@@ -79,6 +82,7 @@ class QubexCircuit(BaseCircuit):
         )
         with PulseSchedule([target]) as ps:
             ps.add(target, VirtualZ(angle))
+            ps.barrier()
         circuit.call(ps)
         return circuit
 
