@@ -39,6 +39,17 @@ download-qubex-config: ## Download qubex config
 	@echo "Downloading qubex config..."
 	@bash scripts/qubex_config_downloader.sh
 
+change-status-to-active: ## Change status to active
+	@echo "Changing status to active..."
+	@bash scripts/change_status_to_active.sh
+	@echo "Status changed to active."
+
+change-status-to-inactive: ## Change status to inactive
+	@echo "Changing status to inactive..."
+	@bash scripts/change_status_to_inactive.sh
+	@echo "Status changed to inactive."
+
+
 help: ## Show this help message
 	@echo "Usage: make [target]"
 	@echo ""
