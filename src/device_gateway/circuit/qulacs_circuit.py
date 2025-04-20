@@ -1,5 +1,3 @@
-"""Qulacs circuit implementation."""
-
 import logging
 
 from qiskit import QuantumCircuit as QiskitQuantumCircuit

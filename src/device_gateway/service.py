@@ -12,7 +12,9 @@ import yaml  # type: ignore[import]
 from grpc_reflection.v1alpha import reflection
 from qiskit.qasm3 import loads
 
+from device_gateway.backend.qubex_backend import QubexBackend
 from device_gateway.backend.qulacs_backend import QulacsBackend
+from device_gateway.circuit.qubex_circuit import QubexCircuit
 from device_gateway.circuit.qulacs_circuit import QulacsCircuit
 from device_gateway.gen.qpu.v1 import qpu_pb2, qpu_pb2_grpc
 
@@ -22,49 +24,36 @@ logger = logging.getLogger("device_gateway")
 class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
     def __init__(self, config: dict):
         super().__init__()
-        self._config = config
-        if self._config["simulator_mode"]:
-            self._qulacs = QulacsBackend(self.virtual_physical_map)
+        self._execute_readout_calibration = True
+        if config["simulator_mode"]:
+            self.backend = QulacsBackend(config=config)
         else:
-            raise NotImplementedError("Qubex is not implemented yet.")
-
-    @property
-    def device_topology_dict(self):
-        with open(self._config["device_topology_json_path"]) as f:
-            device_topology = json.load(f)
-        return device_topology
-
-    @property
-    def device_status(self):
-        return self._config["device_status"]
-
-    @property
-    def virtual_physical_map(self):
-        device_topology = self.device_topology_dict
-        qubits = {
-            qubit["id"]: qubit["physical_id"] for qubit in device_topology["qubits"]
-        }
-        couplings = {
-            (c["control"], c["target"]): (qubits[c["control"]], qubits[c["target"]])
-            for c in device_topology["couplings"]
-        }
-        return {"qubits": qubits, "couplings": couplings}
+            self.backend = QubexBackend(config=config)
 
     def CallJob(self, request: qpu_pb2.CallJobRequest, context):  # type: ignore[name-defined]
         try:
             start_time = time.time()
             job_id = request.job_id
             logger.info(f"CallJob is started. job_id={job_id}")
-            simulator_mode = self._config["simulator_mode"]
-            print("virtual_physical_map", self.virtual_physical_map)
+            if (
+                self.backend.device_status == "active"
+                and self._execute_readout_calibration
+                and self.backend.is_qpu()
+            ):
+                logger.info("Start readout calibration...")
+                self.backend.readout_calibration()
+                logger.info("Readout calibration is done")
+                self._execute_readout_calibration = False
+            logger.info(f"program={request.program}")
             qc = loads(request.program)
-            if simulator_mode:
-                qulacs_circuit = QulacsCircuit(self._qulacs).compile(qc)
-                counts = self._qulacs.execute(qulacs_circuit, shots=request.shots)
+            if self.backend.is_simulator():
+                qulacs_circuit = QulacsCircuit(self.backend).compile(qc)
+                counts = self.backend.execute(qulacs_circuit, shots=request.shots)
             else:
-                raise NotImplementedError("Qubex is not implemented yet.")
-            message = "job is succeeded"
-            result = qpu_pb2.Result(counts=counts, message=message)  # type: ignore[attr-defined]
+                qubex_circuit = QubexCircuit(self.backend).compile(qc)
+                counts = self.backend.execute(qubex_circuit, shots=request.shots)
+
+            result = qpu_pb2.Result(counts=counts, message="job is succeeded")  # type: ignore[attr-defined]
             response = qpu_pb2.CallJobResponse(  # type: ignore[attr-defined]
                 status=qpu_pb2.JobStatus.JOB_STATUS_SUCCESS,  # type: ignore[attr-defined]
                 result=result,
@@ -89,11 +78,11 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
     def GetServiceStatus(self, request, context):
         try:
             logger.info("GetServiceStatus is started.")
-            if self.device_status == "active":
+            if self.backend.is_active():
                 service_status = qpu_pb2.ServiceStatus.SERVICE_STATUS_ACTIVE
-            elif self.device_status == "inactive":
+            elif self.backend.is_inactive():
                 service_status = qpu_pb2.ServiceStatus.SERVICE_STATUS_INACTIVE
-            elif self.device_status == "maintenance":
+            elif self.backend.is_maintenance():
                 service_status = qpu_pb2.ServiceStatus.SERVICE_STATUS_MAINTENANCE
             else:
                 msg = f"service status '{self._status}' is not supported."
@@ -117,11 +106,14 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
     def GetDeviceInfo(self, request: qpu_pb2.GetDeviceInfoRequest, context):  # type: ignore[name-defined]
         try:
             logger.info("GetDeviceInfo is started.")
-            response_parameters = self._config["device_info"]
-            response_parameters["device_info"] = json.dumps(self.device_topology_dict)
-            response_parameters["calibrated_at"] = json.dumps(
-                self.device_topology_dict["calibrated_at"]
+            response_parameters = self.backend.device_info
+            response_parameters["device_info"] = json.dumps(
+                self.backend.device_topology
             )
+            response_parameters["calibrated_at"] = self.backend.device_topology[
+                "calibrated_at"
+            ]
+
             device_info = qpu_pb2.DeviceInfo(**response_parameters)  # type: ignore[attr-defined]
             response = qpu_pb2.GetDeviceInfoResponse(  # type: ignore[attr-defined]
                 body=device_info
