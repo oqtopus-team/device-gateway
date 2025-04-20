@@ -1,16 +1,35 @@
 # Getting Started
 
-## Runging the server locally
+## Generate config files
 
 ```bash
-mkdir logs
-make run
+make generate-config
 ```
 
 ## Running the server in a container
 
 ```bash
 docker compose up
+```
+
+## Change Device Status
+
+### Change the device status "active"
+
+```bash
+make change-status-to-active
+```
+
+### Change the device status "inactive"
+
+```bash
+make change-status-to-inactive
+```
+
+### Change the device status "maintenance"
+
+```bash
+make change-status-to-maintenance
 ```
 
 ## List all services
@@ -65,10 +84,10 @@ make download-qubex-config
 make generate-device-topology
 ```
 
-
 ## Configuration
 
 ### Configuration File
+
 The configuration file is located at `config/config.yaml`. The configuration file is in YAML format and contains the following sections:
 
 - `proto`: The gRPC server configuration.
@@ -80,9 +99,8 @@ The configuration file is located at `config/config.yaml`. The configuration fil
   - `max_qubits`: The maximum number of qubits supported by the device.
   - `max_shots`: The maximum number of shots supported by the device.
 - `simulator_mode`: Whether to run the server in simulator mode or not.
-- `device_status`: The status of the device. Can be `active`, `inactive` or `maintenance`.
+- `device_status_path`: The path to the device status file.
 - `device_topology_json_path`: The path to the device topology JSON file.
-
 
 ### Simulator Example
 
@@ -96,7 +114,7 @@ device_info:
   max_qubits: 3
   max_shots: 10000
 simulator_mode: true
-device_status: active
+device_status_path: config/device_status
 device_topology_json_path: config/device_topology_sim.json
 ```
 
@@ -106,12 +124,12 @@ device_topology_json_path: config/device_topology_sim.json
 proto:
   max_workers: 2
   address: "[::]:51021"
-device_info:	
+device_info:
   device_id: "anemone"
   provider_id: "oqtopus"
   max_qubits: 3
   max_shots: 10000
 simulator_mode: false
-device_status: active
+device_status_path: config/device_status
 device_topology_json_path: config/device_topology.json
 ```
