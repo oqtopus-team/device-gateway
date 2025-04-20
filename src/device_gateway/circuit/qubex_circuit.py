@@ -1,5 +1,3 @@
-"""Qubex circuit implementation."""
-
 import logging
 
 from qiskit import QuantumCircuit as QiskitQuantumCircuit
@@ -13,7 +11,13 @@ logger = logging.getLogger("device_gateway")
 
 
 class QubexCircuit(BaseCircuit):
+    """Qubex circuit implementation."""
+
     def __init__(self, backend: QubexBackend):
+        """Initialize the circuit with backend.
+        Args:
+            backend: Backend to execute the circuit on
+        """
         self._backend = backend
 
     def cx(self, control: str, target: str):
@@ -24,17 +28,8 @@ class QubexCircuit(BaseCircuit):
         logger.debug(
             f"Applying CX gate: {self._backend.virtual_qubit(control)} -> {self._backend.virtual_qubit(target)}, Physical qubits: {control} -> {target}"
         )
-        # cr_label = f"{control}-{target}"
-        # zx90_pulse = self._backend._experiment.zx90(control, target)
-        # x90_pulse = self._backend._experiment.drag_hpi_pulse.get(
-        #     target, self._backend._experiment.hpi_pulse[target]
-        # )
         with PulseSchedule([control, target]) as ps:
-            # ps.call(zx90_pulse)
-            # ps.add(control, VirtualZ(-np.pi / 2))
-            # ps.add(target, x90_pulse.scaled(-1))
             ps.call(self._backend._experiment.cx(control, target))
-        # ps.barrier()
         return ps
 
     def sx(self, target: str):
@@ -45,12 +40,8 @@ class QubexCircuit(BaseCircuit):
         logger.debug(
             f"Applying SX gate: {self._backend.virtual_qubit(target)}, Physical qubit: {target}"
         )
-        # x90_pulse = self._backend._experiment.drag_hpi_pulse.get(
-        #     target, self._backend._experiment.drag_hpi_pulse[target]
-        # )
         with PulseSchedule([target]) as ps:
             ps.add(target, self._backend._experiment.x90(target))
-            # ps.barrier()
         return ps
 
     def x(self, target: str):
@@ -61,12 +52,8 @@ class QubexCircuit(BaseCircuit):
         logger.debug(
             f"Applying X gate: {self._backend.virtual_qubit(target)}, Physical qubit: {target}"
         )
-        # x180_pulse = self._backend._experiment.drag_pi_pulse.get(
-        #     target, self._backend._experiment.drag_pi_pulse[target]
-        # )
         with PulseSchedule([target]) as ps:
             ps.add(target, self._backend._experiment.x180(target))
-            # ps.barrier()
         return ps
 
     def rz(self, target: str, angle: float):
@@ -79,7 +66,6 @@ class QubexCircuit(BaseCircuit):
         )
         with PulseSchedule([target]) as ps:
             ps.add(target, VirtualZ(angle))
-            # ps.barrier()
         return ps
 
     def _used_physical_qubits_and_couplings(self, qc: QiskitQuantumCircuit):
@@ -117,16 +103,25 @@ class QubexCircuit(BaseCircuit):
         return sorted_physical_qubits, sorted_physical_couplings
 
     def compile(self, qc: QiskitQuantumCircuit) -> PulseSchedule:
-        """Load a QASM 3 program and apply the corresponding gates to the circuit."""
+        """Compile a Qiskit circuit to a  Qubex pulse scheduler.
+
+        Args:
+            qc: Qiskit quantum circuit to compile
+
+        Returns:
+            Compiled Qulacs quantum circuit
+
+        Raises:
+            ValueError: If an unsupported instruction is encountered
+        """
         used_physical_qubits, used_physical_couplings = (
             self._used_physical_qubits_and_couplings(qc)
         )
-        self._backend._used_physical_qubits = used_physical_qubits
         logger.info(f"used_physical_qubits: {used_physical_qubits}")
         logger.info(f"used_physical_couplings: {used_physical_couplings}")
-        logger.info(f"virtual_physical_map: {self._backend._virtual_physical_map}")
+        logger.info(f"virtual_physical_map: {self._backend.virtual_physical_map}")
 
-        ps_list = []
+        pulse_scheduler = []
         for instruction in qc.data:
             name = instruction.name
             if name not in SUPPORTED_GATES:
@@ -137,30 +132,24 @@ class QubexCircuit(BaseCircuit):
             physical_label = self._backend.physical_qubit(virtual_index)
 
             if name == "x":
-                # circuit = self.x(circuit, physical_label)
-                ps_list.append(self.x(physical_label))
+                pulse_scheduler.append(self.x(physical_label))
             elif name == "sx":
-                # circuit = self.sx(circuit, physical_label)
-                ps_list.append(self.sx(physical_label))
+                pulse_scheduler.append(self.sx(physical_label))
             elif name == "rz":
                 angle = instruction.params[0]
-                # circuit = self.rz(circuit, physical_label, angle)
-                ps_list.append(self.rz(physical_label, angle))
+                pulse_scheduler.append(self.rz(physical_label, angle))
             elif name == "cx":
                 virtual_target_index = qc.find_bit(instruction.qubits[1]).index
                 physical_target_label = self._backend.physical_qubit(
                     virtual_target_index
                 )
-                # circuit = self.cx(circuit, physical_label, physical_target_label)
-                ps_list.append(self.cx(physical_label, physical_target_label))
-            elif name == "measure":
-                pass
+                pulse_scheduler.append(self.cx(physical_label, physical_target_label))
             else:
                 pass
             with PulseSchedule(
                 used_physical_qubits + used_physical_couplings
             ) as circuit:
-                for ps in ps_list:
+                for ps in pulse_scheduler:
                     circuit.call(ps)
                     circuit.barrier()
         return circuit

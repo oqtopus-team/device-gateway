@@ -176,3 +176,8 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/python
 qubex_config/
 .classifier/
+
+config/device_topology.json
+config/device_topology.png
+config/device_topology_request.json
+config/config.yaml

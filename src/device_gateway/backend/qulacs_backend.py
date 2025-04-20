@@ -10,8 +10,8 @@ logger = logging.getLogger("device_gateway")
 
 
 class QulacsBackend(BaseBackend):
-    def __init__(self, virtual_physical_map: dict):
-        super().__init__(virtual_physical_map)
+    def __init__(self, config: dict):
+        super().__init__(config)
 
     def execute(self, circuit: QulacsQuantumCircuit, shots: int = 1024) -> dict:
         """

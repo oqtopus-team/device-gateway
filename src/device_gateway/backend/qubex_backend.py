@@ -18,10 +18,8 @@ CALIB_NOTE_PATH = os.getenv("CALIB_NOTE_PATH", "/app/qubex_config/calib_note.jso
 
 
 class QubexBackend(BaseBackend):
-    def __init__(self, virtual_physical_map: dict, device_topology=None):
-        super().__init__(virtual_physical_map)
-        if device_topology is not None:
-            self._device_topology = device_topology
+    def __init__(self, config: dict):
+        super().__init__(config)
         self._experiment = Experiment(
             chip_id=CHIP_ID,
             qubits=self.qubits,
@@ -29,13 +27,9 @@ class QubexBackend(BaseBackend):
             params_dir=PARAMS_DIR,
             calib_note_path=CALIB_NOTE_PATH,
         )
-        logger.info("Execute readout calibration...")
-        readout_errors = self._build_classifier()
-        self._update_device_topology_readout_errors(readout_errors)
-        logger.info("Readout calibration is done")
 
     def _search_qubit_by_id(self, id):
-        for qubit in self._device_topology.get("qubits", []):
+        for qubit in self.device_topology.get("qubits", []):
             if qubit.get("id") == id:
                 return qubit
         return None
@@ -54,11 +48,20 @@ class QubexBackend(BaseBackend):
             }
         return note
 
+    def readout_calibration(self):
+        """
+        Perform readout calibration for the qubits.
+        This method is called during the initialization of the QubexBackend.
+        """
+        readout_errors = self._build_classifier()
+        self._update_device_topology_readout_errors(readout_errors)
+
     def _update_device_topology_readout_errors(self, readout_errors):
         """
         Update the device topology with readout errors.
         This method is called during the initialization of the QubexBackend.
         """
+        device_topology = self.device_topology
         for qubit in self.qubits:
             id = self.virtual_qubit(qubit)
             qubit_info = self._search_qubit_by_id(id)
@@ -69,15 +72,18 @@ class QubexBackend(BaseBackend):
                 qubit_info["meas_error"]["prob_meas0_prep1"] = readout_errors[qubit][
                     "p1m0"
                 ]
-        return self._device_topology
+            logger.info(
+                f"Updated readout errors for qubit {qubit}: {qubit_info['meas_error']}"
+            )
+            device_topology["qubits"][id] = qubit_info
+        self.save_device_topology(device_topology)
 
     def execute(self, circuit: PulseSchedule, shots: int = DEFAULT_SHOTS):
         """
         Execute the compiled circuit for a specified number of shots.
-        The compiled_circuit is produced by the Circuit class.
+        The compiled_circuit is produced by the PulseSchedule class.
         """
         logger.info(f"Executing quantum circuit with {shots} shots")
-
         return self._experiment.measure(
             circuit,
             mode="single",
