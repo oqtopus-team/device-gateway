@@ -31,7 +31,7 @@ generate-config: ## Generate config
 	@bash scripts/generate_config.sh
 	@echo "Config generated."
 
-generate-deveice-topology: ## Generate device topology
+generate-device-topology: ## Generate device topology
 	@echo "Generating device topology..."
 	@bash scripts/device_topology_generator.sh
 
