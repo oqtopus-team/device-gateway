@@ -7,7 +7,7 @@
 
 ## Overview
 
-The device-gateway is a server that translates OpenQASM3 instructions into commands compatible with various quantum control software platforms. It maintains calibration data and device topology information, enabling the mapping of virtual qubits specified in the OpenQASM code to physical qubits during the pulse generation process. The system employs gRPC for efficient remote procedure calls. Its modular backend architecture supports integration with diverse quantum control software and simulators, with the current implementation utilizing Qulacs as the simulator backend. Moreover, the device-gateway operates in close collaboration with the oqtopus-engine.
+The device-gateway is a server that translates OpenQASM3 instructions into commands compatible with various quantum control software platforms. It maintains calibration data and device topology information, enabling the mapping of virtual qubits specified in the OpenQASM code to physical qubits during the pulse generation process. The system employs gRPC for efficient remote procedure calls. Its modular backend architecture supports integration with diverse quantum control software and simulators, with the current implementation utilizing Qulacs as the simulator backend. As a device-contorol software, we support Qubex. Moreover, the device-gateway operates in close collaboration with the oqtopus-engine.
 
 ![Device Gateway](./docs/asset/device_gateway.png)
 
