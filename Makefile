@@ -6,7 +6,7 @@ PROTO_URL := https://raw.githubusercontent.com/oqtopus-team/oqtopus-engine/main/
 SPEC_DIR := spec
 PROTO_FILE := $(SPEC_DIR)/qpu.proto
 
-.PHONY: proto-download proto-generate, generate-deveice-topology, download-qubex-config, job, run, test, docs
+.PHONY: proto-download proto-generate, generate-config, generate-deveice-topology, download-qubex-config, job, run, test, docs
 
 proto-download: ## Download proto file from oqtopus-engine
 	@echo "Downloading proto file..."
@@ -26,6 +26,11 @@ test:
 docs:
 	@uv run mkdocs build
 
+generate-config: ## Generate config
+	@echo "Generating config..."
+	@bash scripts/generate_config.sh
+	@echo "Config generated."
+
 generate-deveice-topology: ## Generate device topology
 	@echo "Generating device topology..."
 	@bash scripts/device_topology_generator.sh
@@ -33,6 +38,21 @@ generate-deveice-topology: ## Generate device topology
 download-qubex-config: ## Download qubex config
 	@echo "Downloading qubex config..."
 	@bash scripts/qubex_config_downloader.sh
+
+change-status-to-active: ## Change status to active
+	@echo "Changing status to active..."
+	@bash scripts/change_status_to_active.sh
+	@echo "Status changed to active."
+
+change-status-to-inactive: ## Change status to inactive
+	@echo "Changing status to inactive..."
+	@bash scripts/change_status_to_inactive.sh
+	@echo "Status changed to inactive."
+
+change-status-to-maintenance: ## Change status to maintenance
+	@echo "Changing status to maintenance..."
+	@bash scripts/change_status_to_maintenance.sh
+	@echo "Status changed to maintenance."
 
 help: ## Show this help message
 	@echo "Usage: make [target]"

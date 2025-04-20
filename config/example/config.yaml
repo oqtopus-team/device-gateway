@@ -1,0 +1,11 @@
+proto:
+  max_workers: 2
+  address: "[::]:51021"
+device_info:
+  device_id: "qulacs"
+  provider_id: "qiqb"
+  max_qubits: 3
+  max_shots: 10000
+simulator_mode: true
+device_status_path: config/device_status
+device_topology_json_path: config/device_topology_sim.json

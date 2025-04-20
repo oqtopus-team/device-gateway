@@ -181,3 +181,5 @@ config/device_topology.json
 config/device_topology.png
 config/device_topology_request.json
 config/config.yaml
+config/device_topology_sim.json
+config/device_status

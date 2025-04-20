@@ -26,6 +26,14 @@ class BaseBackend(metaclass=ABCMeta):
             device_topology = json.load(f)
         return device_topology
 
+    def load_device_status(self):
+        """
+        Load the device status from the device_status file.
+        """
+        with open(self.config["device_status_path"]) as f:
+            device_status = f.read().strip()
+        return device_status
+
     def save_device_topology(self, device_topology):
         with open(self.config["device_topology_json_path"], "w") as f:
             json.dump(device_topology, f, indent=4)
@@ -34,19 +42,19 @@ class BaseBackend(metaclass=ABCMeta):
         """
         Check if the device is active.
         """
-        return self.config["device_status"] == "active"
+        return self.device_status == "active"
 
     def is_inactive(self) -> bool:
         """
         Check if the device is inactive.
         """
-        return self.config["device_status"] == "inactive"
+        return self.device_status == "inactive"
 
     def is_maintenance(self) -> bool:
         """
         Check if the device is in maintenance.
         """
-        return self.config["device_status"] == "maintenance"
+        return self.device_status == "maintenance"
 
     def is_simulator(self) -> bool:
         """
@@ -70,9 +78,9 @@ class BaseBackend(metaclass=ABCMeta):
     @property
     def device_status(self) -> dict:
         """
-        Returns the device status, e.g., {"status": "OK", "message": "Device is operational"}
+        Returns the device status, e.g., "active", "inactive", "maintenance"
         """
-        return self.config["device_status"]
+        return self.load_device_status()
 
     @property
     def device_info(self) -> dict:
