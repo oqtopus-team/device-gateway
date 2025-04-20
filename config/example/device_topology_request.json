@@ -1,0 +1,13 @@
+{
+  "name": "anemone",
+  "device_id": "anemone",
+  "qubits": [
+    "0",
+    "2",
+    "3"
+  ],
+  "exclude_couplings": [
+    "0-1",
+    "3-1"
+  ]
+}
