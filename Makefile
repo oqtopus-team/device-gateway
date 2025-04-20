@@ -26,6 +26,11 @@ test:
 docs:
 	@uv run mkdocs build
 
+init:
+	@echo "Initializing environment..."
+	@bash scripts/init.sh
+	@echo "Environment initialized."
+
 generate-deveice-topology: ## Generate device topology
 	@echo "Generating device topology..."
 	@bash scripts/device_topology_generator.sh

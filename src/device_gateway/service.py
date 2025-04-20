@@ -35,11 +35,18 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             start_time = time.time()
             job_id = request.job_id
             logger.info(f"CallJob is started. job_id={job_id}")
-            if (
-                self.backend.device_status == "active"
-                and self._execute_readout_calibration
-                and self.backend.is_qpu()
-            ):
+            if self.backend.is_inactive():
+                logger.error(
+                    f"CallJob. job_id={job_id}, device is inactive. "
+                    "Please check the device status."
+                )
+                result = qpu_pb2.Result(message="device is inactive")
+                response = qpu_pb2.CallJobResponse(  # type: ignore[attr-defined]
+                    status=qpu_pb2.JobStatus.JOB_STATUS_FAILURE,  # type: ignore[attr-defined]
+                    result=result,
+                )
+                return response
+            if self._execute_readout_calibration and self.backend.is_qpu():
                 logger.info("Start readout calibration...")
                 self.backend.readout_calibration()
                 logger.info("Readout calibration is done")
@@ -85,7 +92,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             elif self.backend.is_maintenance():
                 service_status = qpu_pb2.ServiceStatus.SERVICE_STATUS_MAINTENANCE
             else:
-                msg = f"service status '{self._status}' is not supported."
+                msg = f"service status '{self.device_status}' is not supported."
                 raise ValueError(msg)
 
             # build response parameters
