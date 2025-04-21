@@ -1,4 +1,5 @@
 services:
+  # Default service using qulacs backend
   device-gateway:
     build:
       context: .
@@ -6,9 +7,29 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./config:/app/config
-      - ./qubex_config:/app/qubex_config
     environment:
       - PYTHONUNBUFFERED=1
     ports:
       - "51021:51021"
     restart: unless-stopped
+
+  # Optional service using qubex backend
+  device-gateway-qubex:
+    build:
+      context: .
+      dockerfile: Dockerfile.qubex.dev
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config
+      - ./qubex_config:/app/qubex_config
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CHIP_ID=${CHIP_ID:-64Q}
+      - CONFIG_DIR=/app/qubex_config
+      - PARAMS_DIR=/app/qubex_config
+      - CALIB_NOTE_PATH=/app/qubex_config/calib_note.json
+    ports:
+      - "51021:51021"
+    restart: unless-stopped
+    profiles:
+      - qubex

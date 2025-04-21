@@ -17,7 +17,6 @@ dependencies = [
     "pyyaml>=6.0.2",
     "python-json-logger>=2.0.7",
     "grpcio-reflection>=1.62.3",
-    "qubex[backend]",
 ]
 
 [dependency-groups]
@@ -33,6 +32,10 @@ dev = [
     "mkdocs-static-i18n>=1.3.0",
     "pymdown-extensions>=10.14.3",
     "mkdocs-exclude>=1.0.2",
+]
+
+qubex = [
+    "qubex[backend]",
 ]
 
 
@@ -52,4 +55,5 @@ addopts = "--cov=src --cov-report=xml"
 pythonpath = ["src","src/device_gateway","src/device_gateway/qpu_interface","src/device_gateway/backend","src/device_gateway/circuit","src/device_gateway/qpu_interface","src/device_gateway/qpu_interface/v2"]
 
 [tool.uv.sources]
-qubex = { git = "https://github.com/amachino/qubex.git", rev = "v1.3.1" }
+qubex = { git = "https://github.com/amachino/qubex.git", tag = "v1.3.1" }
+

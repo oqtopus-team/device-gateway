@@ -12,23 +12,62 @@ import yaml  # type: ignore[import]
 from grpc_reflection.v1alpha import reflection
 from qiskit.qasm3 import loads
 
-from device_gateway.backend.qubex_backend import QubexBackend
-from device_gateway.backend.qulacs_backend import QulacsBackend
-from device_gateway.circuit.qubex_circuit import QubexCircuit
-from device_gateway.circuit.qulacs_circuit import QulacsCircuit
+from device_gateway.backend.plugin_manager import BackendPluginManager
+from device_gateway.circuit.plugin_manager import CircuitPluginManager
 from device_gateway.gen.qpu.v1 import qpu_pb2, qpu_pb2_grpc
 
 logger = logging.getLogger("device_gateway")
 
 
 class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
+    def _load_plugin(self, name: str) -> None:
+        """Load a plugin's backend and circuit components.
+
+        Args:
+            name: Plugin name (e.g., "qulacs", "qubex")
+        """
+        try:
+            if name == "qulacs":
+                # Load default implementation
+                self._backend_manager.load_backend_from_path(
+                    name,
+                    f"device_gateway.backend.{name}_backend",
+                    f"{name.capitalize()}Backend",
+                )
+                self._circuit_manager.load_circuit_from_path(
+                    name,
+                    f"device_gateway.circuit.{name}_circuit",
+                    f"{name.capitalize()}Circuit",
+                )
+            else:
+                # Load plugin implementation
+                self._backend_manager.load_backend_from_path(
+                    name,
+                    f"device_gateway.plugins.{name}.backend.{name}_backend",
+                    f"{name.capitalize()}Backend",
+                )
+                self._circuit_manager.load_circuit_from_path(
+                    name,
+                    f"device_gateway.plugins.{name}.circuit.{name}_circuit",
+                    f"{name.capitalize()}Circuit",
+                )
+        except ImportError:
+            if name != "qulacs":
+                logger.error(f"{name} backend is specified but not installed")
+                raise
+
     def __init__(self, config: dict):
         super().__init__()
         self._execute_readout_calibration = True
-        if config["simulator_mode"]:
-            self.backend = QulacsBackend(config=config)
-        else:
-            self.backend = QubexBackend(config=config)
+        self._backend_manager = BackendPluginManager()
+        self._circuit_manager = CircuitPluginManager()
+
+        # Initialize plugins and backend
+        self.backend_name = config.get("backend", "qulacs")
+        self._load_plugin("qulacs")  # Always load qulacs
+        if self.backend_name != "qulacs":
+            self._load_plugin(self.backend_name)  # Load specified backend if different
+        self.backend = self._backend_manager.get_backend(self.backend_name, config)
 
     def CallJob(self, request: qpu_pb2.CallJobRequest, context):  # type: ignore[name-defined]
         try:
@@ -53,12 +92,10 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                 self._execute_readout_calibration = False
             logger.info(f"program={request.program}")
             qc = loads(request.program)
-            if self.backend.is_simulator():
-                qulacs_circuit = QulacsCircuit(self.backend).compile(qc)
-                counts = self.backend.execute(qulacs_circuit, shots=request.shots)
-            else:
-                qubex_circuit = QubexCircuit(self.backend).compile(qc)
-                counts = self.backend.execute(qubex_circuit, shots=request.shots)
+            # Get appropriate circuit based on backend
+            circuit = self._circuit_manager.get_circuit(self.backend_name, self.backend)
+            compiled_circuit = circuit.compile(qc)
+            counts = self.backend.execute(compiled_circuit, shots=request.shots)
 
             result = qpu_pb2.Result(counts=counts, message="job is succeeded")  # type: ignore[attr-defined]
             response = qpu_pb2.CallJobResponse(  # type: ignore[attr-defined]

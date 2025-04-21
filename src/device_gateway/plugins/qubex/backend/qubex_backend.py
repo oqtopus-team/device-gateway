@@ -7,25 +7,22 @@ from qubex.experiment import Experiment
 from qubex.measurement.measurement import DEFAULT_INTERVAL, DEFAULT_SHOTS
 from qubex.pulse import PulseSchedule
 
-from device_gateway.backend.base_backend import BaseBackend
+from device_gateway.backend.base_backend import BaseBackend  # デフォルト実装から継承
 
 logger = logging.getLogger("device_gateway")
-
-CHIP_ID = os.getenv("CHIP_ID", "64Q")
-CONFGIG_DIR = os.getenv("CONFIG_DIR", "/app/qubex_config")
-PARAMS_DIR = os.getenv("PARAMS_DIR", "/app/qubex_config")
-CALIB_NOTE_PATH = os.getenv("CALIB_NOTE_PATH", "/app/qubex_config/calib_note.json")
 
 
 class QubexBackend(BaseBackend):
     def __init__(self, config: dict):
         super().__init__(config)
         self._experiment = Experiment(
-            chip_id=CHIP_ID,
+            chip_id=os.getenv("CHIP_ID", "64Q"),
             qubits=self.qubits,
-            config_dir=CONFGIG_DIR,
-            params_dir=PARAMS_DIR,
-            calib_note_path=CALIB_NOTE_PATH,
+            config_dir=os.getenv("CONFIG_DIR", "/app/qubex_config"),
+            params_dir=os.getenv("PARAMS_DIR", "/app/qubex_config"),
+            calib_note_path=os.getenv(
+                "CALIB_NOTE_PATH", "/app/qubex_config/calib_note.json"
+            ),
         )
 
     def _search_qubit_by_id(self, id):
