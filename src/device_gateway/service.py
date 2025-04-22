@@ -35,8 +35,6 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
     def __init__(
         self,
         config: dict,
-        backend_manager: BackendPluginManager | None = None,
-        circuit_manager: CircuitPluginManager | None = None,
     ):
         """Initialize the QPU service.
 
@@ -47,8 +45,8 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         """
         super().__init__()
         self._execute_readout_calibration = True
-        self._backend_manager = backend_manager or BackendPluginManager()
-        self._circuit_manager = circuit_manager or CircuitPluginManager()
+        self._backend_manager = BackendPluginManager()
+        self._circuit_manager = CircuitPluginManager()
         self._initialize_backend(config)
 
     def _load_plugin(self, name: str) -> None:

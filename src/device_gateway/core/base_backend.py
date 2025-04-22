@@ -13,7 +13,7 @@ class BaseBackend(metaclass=ABCMeta):
 
     def __init__(self, config: dict):
         """
-        Initialize the backend with a virtual-to-physical qubit mapping.
+        Initialize the backend with the configuration.
         This is done once at server startup.
         """
         self.config = config
@@ -94,7 +94,11 @@ class BaseBackend(metaclass=ABCMeta):
         return self.config["device_info"]
 
     @property
-    def virtual_physical_map(self):
+    def physical_map(self):
+        """
+        Returns the physical index to physical label mapping.
+        The mapping is in the format physical_map: {'qubits': {0: 'Q29', 1: 'Q30', 2: 'Q31'}, 'couplings': {(2, 0): ('Q31', 'Q29'), (2, 1): ('Q31', 'Q30')}}"}
+        """
         device_topology = self.load_device_topology()
         qubits = {
             qubit["id"]: f"Q{qubit['physical_id']:02}"
@@ -114,7 +118,7 @@ class BaseBackend(metaclass=ABCMeta):
         """
         Returns a list of qubit labels, e.g., ["Q05", "Q07"]
         """
-        return list(self.virtual_physical_map["qubits"].values())  # type: ignore
+        return list(self.physical_map["qubits"].values())  # type: ignore
 
     @property
     def couplings(self) -> list:
@@ -123,35 +127,35 @@ class BaseBackend(metaclass=ABCMeta):
         """
         return [
             f"{v[0]}-{v[1]}"
-            for v in self.virtual_physical_map["couplings"].values()  # type: ignore
+            for v in self.physical_map["couplings"].values()  # type: ignore
         ]  # type: ignore
 
     @property
-    def virtual_physical_qubits(self) -> dict:
+    def physical_index_to_physical_label(self) -> dict:
         """
-        Returns the virtual-to-physical mapping, e.g., {0: "Q05", 1: "Q07"}
+        Returns the physical index to physical label mapping, e.g., {0: "Q05", 1: "Q07"}
         """
         # Return a shallow copy to avoid accidental modifications
-        return self.virtual_physical_map["qubits"].copy()  # type: ignore
+        return self.physical_map["qubits"].copy()  # type: ignore
 
     @property
-    def physical_virtual_qubits(self) -> dict:
+    def physical_label_to_physical_index(self) -> dict:
         """
-        Returns the physical-to-virtual mapping, e.g., {"Q05": 0, "Q07": 1}
+        Returns the physical label to physical index mapping, e.g., {"Q05": 0, "Q07": 1}
         """
-        return {v: k for k, v in self.virtual_physical_qubits.items()}
+        return {v: k for k, v in self.physical_index_to_physical_label.items()}
 
-    def physical_qubit(self, virtual_qubit: str) -> str:
+    def physical_label(self, physical_index: str) -> str:
         """
-        Returns the physical qubit corresponding to the virtual qubit.
+        Returns the physical label corresponding to the physical index.
         """
-        return self.virtual_physical_qubits[virtual_qubit]
+        return self.physical_index_to_physical_label[physical_index]
 
-    def virtual_qubit(self, physical_qubit: str) -> int:
+    def physical_index(self, physical_label: str) -> int:
         """
-        Returns the virtual qubit corresponding to the physical qubit.
+        Returns the physical index corresponding to the physical label.
         """
-        return self.physical_virtual_qubits[physical_qubit]
+        return self.physical_label_to_physical_index[physical_label]
 
     def execute(self, circuit, shots: int = 1024) -> dict:
         """

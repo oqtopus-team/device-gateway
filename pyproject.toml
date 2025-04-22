@@ -32,8 +32,8 @@ dev = [
     "mkdocs-static-i18n>=1.3.0",
     "pymdown-extensions>=10.14.3",
     "mkdocs-exclude>=1.0.2",
+    "jupyter>=1.1.1",
 ]
-
 qubex = [
     "qubex[backend]",
 ]
@@ -56,4 +56,3 @@ pythonpath = ["src","src/device_gateway","src/device_gateway/qpu_interface","src
 
 [tool.uv.sources]
 qubex = { git = "https://github.com/amachino/qubex.git", tag = "v1.3.1" }
-

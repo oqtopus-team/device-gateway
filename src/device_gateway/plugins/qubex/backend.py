@@ -60,7 +60,7 @@ class QubexBackend(BaseBackend):
         """
         device_topology = self.device_topology
         for qubit in self.qubits:
-            id = self.virtual_qubit(qubit)
+            id = self.physical_index(qubit)
             qubit_info = self._search_qubit_by_id(id)
             if qubit_info is not None:
                 qubit_info["meas_error"]["prob_meas1_prep0"] = readout_errors[qubit][
@@ -99,7 +99,7 @@ class QubexBackend(BaseBackend):
         """
         physical_qubits = []
         for qubit in measured_qubits:
-            physical_qubits.append(self.physical_qubit(qubit))
+            physical_qubits.append(self.physical_label(qubit))
         total = sum(counts.values())
         probabilities = {key: count / total for key, count in counts.items()}
         labels = [f"{i}" for i in probabilities.keys()]
@@ -117,7 +117,7 @@ class QubexBackend(BaseBackend):
         measured_qubits,
     ) -> dict[str, int]:
         assignment_matrices = []
-        qubits = self._device_topology["qubits"]
+        qubits = self.device_topology["qubits"]
         n_qubits = len(measured_qubits)
 
         # LocalReadoutMitigator (used below) creates a vector of length 2^(#qubits).
