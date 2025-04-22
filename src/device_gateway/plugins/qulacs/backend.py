@@ -4,7 +4,7 @@ from collections import Counter
 from qulacs import QuantumCircuit as QulacsQuantumCircuit
 from qulacs import QuantumState
 
-from device_gateway.backend.base_backend import BaseBackend
+from device_gateway.core.base_backend import BaseBackend
 
 logger = logging.getLogger("device_gateway")
 

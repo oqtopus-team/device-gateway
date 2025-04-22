@@ -3,9 +3,9 @@ import logging
 from qiskit import QuantumCircuit as QiskitQuantumCircuit
 from qulacs import QuantumCircuit as QulacsQuantumCircuit
 
-from device_gateway.backend.qulacs_backend import QulacsBackend
-from device_gateway.circuit.base_circuit import BaseCircuit
-from device_gateway.circuit.gate_set import SUPPORTED_GATES
+from device_gateway.core.base_circuit import BaseCircuit
+from device_gateway.core.gate_set import SUPPORTED_GATES
+from device_gateway.plugins.qulacs.backend import QulacsBackend
 
 logger = logging.getLogger("device_gateway")
 

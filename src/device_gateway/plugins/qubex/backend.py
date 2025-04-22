@@ -7,7 +7,7 @@ from qubex.experiment import Experiment
 from qubex.measurement.measurement import DEFAULT_INTERVAL, DEFAULT_SHOTS
 from qubex.pulse import PulseSchedule
 
-from device_gateway.backend.base_backend import BaseBackend  # デフォルト実装から継承
+from device_gateway.core.base_backend import BaseBackend
 
 logger = logging.getLogger("device_gateway")
 

@@ -3,9 +3,9 @@ import logging
 from qiskit import QuantumCircuit as QiskitQuantumCircuit
 from qubex.pulse import PulseSchedule, VirtualZ
 
-from device_gateway.backend.qubex_backend import QubexBackend
-from device_gateway.circuit.base_circuit import BaseCircuit
-from device_gateway.circuit.gate_set import SUPPORTED_GATES
+from device_gateway.core.base_circuit import BaseCircuit
+from device_gateway.core.gate_set import SUPPORTED_GATES
+from device_gateway.plugins.qubex.backend import QubexBackend
 
 logger = logging.getLogger("device_gateway")
 
