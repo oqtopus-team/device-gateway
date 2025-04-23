@@ -86,7 +86,7 @@ class QubexBackend(BaseBackend):
             mode="single",
             shots=shots,
             interval=DEFAULT_INTERVAL,
-        ).get_counts()
+        ).get_counts(targets=self.classical_registers)
 
     def qubex_error_mitigation(
         self,

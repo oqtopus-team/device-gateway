@@ -25,7 +25,7 @@ class QubexCircuit(BaseCircuit):
         if target not in self._backend.qubits or control not in self._backend.qubits:
             logger.error(f"Invalid qubits for CNOT: {control}, {target}")
             raise ValueError(f"Invalid qubits for CNOT: {control}, {target}")
-        logger.debug(
+        logger.info(
             f"Applying CX gate: {self._backend.physical_index(control)} -> {self._backend.physical_index(target)}, Physical qubits: {control} -> {target}"
         )
         with PulseSchedule([control, target]) as ps:
@@ -37,7 +37,7 @@ class QubexCircuit(BaseCircuit):
         if target not in self._backend.qubits:
             logger.error(f"Invalid qubit: {target}")
             raise ValueError(f"Invalid qubit: {target}")
-        logger.debug(
+        logger.info(
             f"Applying SX gate: {self._backend.physical_index(target)}, Physical qubit: {target}"
         )
         with PulseSchedule([target]) as ps:
@@ -49,7 +49,7 @@ class QubexCircuit(BaseCircuit):
         if target not in self._backend.qubits:
             logger.error(f"Invalid qubit: {target}")
             raise ValueError(f"Invalid qubit: {target}")
-        logger.debug(
+        logger.info(
             f"Applying X gate: {self._backend.physical_index(target)}, Physical qubit: {target}"
         )
         with PulseSchedule([target]) as ps:
@@ -61,46 +61,12 @@ class QubexCircuit(BaseCircuit):
         if target not in self._backend.qubits:
             logger.error(f"Invalid qubit: {target}")
             raise ValueError(f"Invalid qubit: {target}")
-        logger.debug(
+        logger.info(
             f"Applying RZ gate: {self._backend.physical_index(target)}, Physical qubit: {target}, angle={angle}"
         )
         with PulseSchedule([target]) as ps:
             ps.add(target, VirtualZ(angle))
         return ps
-
-    def _used_physical_qubits_and_couplings(self, qc: QiskitQuantumCircuit):
-        """Return the used physical qubits and couplings."""
-        used_physical_qubits = set()
-        used_physical_couplings = set()
-
-        for instruction in qc.data:
-            name = instruction.name
-            if name not in SUPPORTED_GATES:
-                logger.error(f"Unsupported instruction: {name}")
-                raise ValueError(f"Unsupported instruction: {name}")
-
-            physical_index = qc.find_bit(instruction.qubits[0]).index
-            physical_label = self._backend.physical_label(physical_index)
-            used_physical_qubits.add(physical_label)
-
-            if name == "cx":
-                physical_target_index = qc.find_bit(instruction.qubits[1]).index
-                physical_target_label = self._backend.physical_label(
-                    physical_target_index
-                )
-                used_physical_qubits.add(physical_target_label)
-                coupling = f"{physical_label}-{physical_target_label}"
-                used_physical_couplings.add(coupling)
-
-        # Convert sets to sorted lists
-        # Sort physical qubits based on their virtual qubit indices
-        sorted_physical_qubits = sorted(
-            list(used_physical_qubits),
-            key=lambda x: self._backend.physical_label_to_physical_index[x],
-        )
-        sorted_physical_couplings = sorted(list(used_physical_couplings))
-
-        return sorted_physical_qubits, sorted_physical_couplings
 
     def compile(self, qc: QiskitQuantumCircuit) -> PulseSchedule:
         """Compile a Qiskit circuit to a  Qubex pulse scheduler.
@@ -117,7 +83,7 @@ class QubexCircuit(BaseCircuit):
         used_physical_qubits: set[str] = set()
         used_physical_couplings: set[str] = set()
         logger.info(f"physical_map: {self._backend.physical_map}")
-        virtual_index_to_physical_index = {}
+        classical_bit_mapping = {}
 
         pulse_scheduler = []
         for instruction in qc.data:
@@ -150,17 +116,24 @@ class QubexCircuit(BaseCircuit):
                 # TODO: intermediate measurement or partial measurement
                 virtual_index = qc.find_bit(instruction.clbits[0]).index
                 physical_index = qc.find_bit(instruction.qubits[0]).index
-                virtual_index_to_physical_index[virtual_index] = physical_index
+                classical_bit_mapping[virtual_index] = physical_index
                 logger.info(
                     f"virtual qubit: {virtual_index} -> physical index: {physical_index} -> physical label: {self._backend.physical_label(physical_index)}"
                 )
             else:
                 pass
-        physical_list = []
-        for virtual, physical in sorted(virtual_index_to_physical_index.items()):
-            physical_list.append(self._backend.physical_label(physical))
-            ## TODO: if partial measurement, add the control qubits
-        with PulseSchedule(physical_list + list(used_physical_couplings)) as circuit:
+        classical_registers = []
+        # qubex bit mapping is inversed of Qiskit e.g. qubex: | q0, q1, q2 >, qiskit: | q2, q1, q0 >
+        inversed_classical_bit_mapping = sorted(
+            classical_bit_mapping.items(), key=lambda x: x[0], reverse=True
+        )
+        for virtual, physical in inversed_classical_bit_mapping:
+            classical_registers.append(self._backend.physical_label(physical))
+        self._backend.classical_registers = classical_registers
+
+        with PulseSchedule(
+            list(used_physical_qubits) + list(used_physical_couplings)
+        ) as circuit:
             for ps in pulse_scheduler:
                 circuit.call(ps)
                 circuit.barrier()

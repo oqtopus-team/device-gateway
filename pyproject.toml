@@ -16,6 +16,7 @@ dependencies = [
     "qiskit-qasm3-import>=0.5.1",
     "pyyaml>=6.0.2",
     "grpcio-reflection>=1.62.3",
+    "qubex[backend]",
 ]
 
 [project.optional-dependencies]
