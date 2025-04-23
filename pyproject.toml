@@ -18,6 +18,12 @@ dependencies = [
     "grpcio-reflection>=1.62.3",
 ]
 
+[project.optional-dependencies]
+qubex = [
+    "qubex[backend]",
+]
+
+
 [dependency-groups]
 dev = [
     "mypy>=1.15.0",
@@ -33,9 +39,6 @@ dev = [
     "mkdocs-exclude>=1.0.2",
     "jupyter>=1.1.1",
     "python-json-logger>=2.0.7",
-]
-qubex = [
-    "qubex[backend]",
 ]
 
 
