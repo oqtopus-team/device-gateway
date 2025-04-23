@@ -4,7 +4,7 @@ proto:
 
 device_info:
   device_id: "qulacs"
-  provider_id: "qiqb"
+  provider_id: "oqtopus"
   max_qubits: 3
   max_shots: 10000
 
