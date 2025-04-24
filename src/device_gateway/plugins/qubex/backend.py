@@ -104,7 +104,9 @@ class QubexBackend(BaseBackend):
         probabilities = {key: count / total for key, count in counts.items()}
         labels = [f"{i}" for i in probabilities.keys()]
         prob = np.array(list(probabilities.values()))
-        cm_inv = self._experiment.get_inverse_confusion_matrix(physical_qubits)
+        cm_inv = self._experiment.get_inverse_confusion_matrix(
+            targets=self.classical_registers
+        )
         mitigated_prob = prob @ cm_inv
         prob_dict = dict(zip(labels, mitigated_prob))
         mitigated_counts = {k: int(v * shots) for k, v in prob_dict.items()}

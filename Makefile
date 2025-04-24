@@ -54,6 +54,11 @@ change-status-to-maintenance: ## Change status to maintenance
 	@bash scripts/change_status_to_maintenance.sh
 	@echo "Status changed to maintenance."
 
+install-qubex:
+	@echo "Installing qubex..."
+	@uv sync --only-group qubex
+	@echo "Qubex installed."
+
 help: ## Show this help message
 	@echo "Usage: make [target]"
 	@echo ""
