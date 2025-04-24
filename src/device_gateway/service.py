@@ -49,22 +49,23 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         self._circuit_manager = CircuitPluginManager()
         self._initialize_backend(config)
 
-    def _load_plugin(self, name: str) -> None:
+    def _load_plugin(self, plugin_config: dict) -> None:
         """Load a plugin's backend and circuit components.
 
         Args:
-            name: Plugin name (e.g., "qulacs", "qubex")
+            plugin_config: Plugin configuration dictionary
 
         Raises:
-            ImportError: If the specified backend is not supported.
+            ImportError: If the specified plugin is not supported.
         """
+        name = plugin_config.get("name")
         if name not in SUPPORTED_BACKENDS:
-            logger.error(ERROR_UNSUPPORTED_BACKEND.format(name))
-            raise ImportError(ERROR_UNSUPPORTED_BACKEND.format(name))
+            logger.error(ERROR_UNSUPPORTED_BACKEND.format(plugin_config))
+            raise ImportError(ERROR_UNSUPPORTED_BACKEND.format(plugin_config))
 
         try:
-            self._backend_manager.load_backend(name)
-            self._circuit_manager.load_circuit(name)
+            self._backend_manager.load_backend(config={"plugin": plugin_config})
+            self._circuit_manager.load_circuit(config={"plugin": plugin_config})
         except ImportError as e:
             logger.error(f"Failed to load plugin {name}: {str(e)}")
             raise
@@ -75,8 +76,9 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         Args:
             config: Configuration dictionary.
         """
-        self.backend_name = config.get("backend", DEFAULT_BACKEND)
-        self._load_plugin(self.backend_name)
+        plugin_config = config.get("plugin", {"name": DEFAULT_BACKEND})
+        self.backend_name = plugin_config.get("name", DEFAULT_BACKEND)
+        self._load_plugin(plugin_config)
         self.backend = self._backend_manager.get_backend(self.backend_name, config)
 
     def _create_error_response(self, message: str) -> qpu_pb2.CallJobResponse:

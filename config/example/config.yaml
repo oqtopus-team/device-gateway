@@ -8,8 +8,25 @@ device_info:
   max_qubits: 3
   max_shots: 10000
 
-# Backend configuration
-backend: "qulacs" # Available options: "qulacs", "qubex"
+# Plugin configuration
+plugin:
+  name: "qulacs" # Available options: "qulacs", "qubex"
+  backend:
+    module_path: "device_gateway.plugins.qulacs.backend"
+    class_name: "QulacsBackend"
+  circuit:
+    module_path: "device_gateway.plugins.qulacs.circuit"
+    class_name: "QulacsCircuit"
+
+# Qubex plugin configuration. Uncomment to use Qubex backend
+# plugin:
+#   name: "qubex" # Available options: "qulacs", "qubex"
+#   backend:
+#     module_path: "device_gateway.plugins.qubex.backend"
+#     class_name: "QubexBackend"
+#   circuit:
+#     module_path: "device_gateway.plugins.qubex.circuit"
+#     class_name: "QubexCircuit"
 
 # Common backend settings
 device_status_path: config/device_status

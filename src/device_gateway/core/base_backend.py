@@ -60,13 +60,17 @@ class BaseBackend(metaclass=ABCMeta):
         """
         Check if the device is a simulator.
         """
-        return self.config.get("backend", "qulacs") == "qulacs"
+        plugin_config = self.config.get("plugin", {})
+        plugin_name = plugin_config.get("name", "qulacs")
+        return plugin_name == "qulacs"
 
     def is_qpu(self) -> bool:
         """
         Check if the device is a QPU.
         """
-        return self.config.get("backend", "qulacs") == "qubex"
+        plugin_config = self.config.get("plugin", {})
+        plugin_name = plugin_config.get("name", "qulacs")
+        return plugin_name == "qubex"
 
     @property
     def device_topology(self) -> dict:
