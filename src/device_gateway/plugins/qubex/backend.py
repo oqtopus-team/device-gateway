@@ -6,6 +6,7 @@ from qiskit.result import Counts, LocalReadoutMitigator, ProbDistribution
 from qubex.experiment import Experiment
 from qubex.measurement.measurement import DEFAULT_INTERVAL, DEFAULT_SHOTS
 from qubex.pulse import PulseSchedule
+from qubex.version import get_package_version
 
 from device_gateway.core.base_backend import BaseBackend
 
@@ -24,6 +25,7 @@ class QubexBackend(BaseBackend):
                 "CALIB_NOTE_PATH", "/app/qubex_config/calib_note.json"
             ),
         )
+        logger.info(f"Qubex version: {get_package_version('qubex')}")
 
     def _search_qubit_by_id(self, id):
         for qubit in self.device_topology.get("qubits", []):

@@ -29,7 +29,7 @@ RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /
 USER appuser
 
 # install python dependencies including qubex
-RUN uv sync --only-group qubex --no-dev
+RUN uv sync --all-groups
 
 # run application
 CMD ["uv", "run", "python", "src/device_gateway/service.py", "-c", "config/config.yaml", "-l", "config/logging.yaml"]

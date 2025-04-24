@@ -48,6 +48,10 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         self._backend_manager = BackendPluginManager()
         self._circuit_manager = CircuitPluginManager()
         self._initialize_backend(config)
+        logger.info(f"ServerImpl initialized with backend: {self.backend_name}")
+        logger.info(f"device_info={self.backend.device_info}")
+        logger.info(f"device_topology={self.backend.device_topology}")
+        logger.info(f"device_status={self.backend.device_status}")
 
     def _load_plugin(self, plugin_config: dict) -> None:
         """Load a plugin's backend and circuit components.
