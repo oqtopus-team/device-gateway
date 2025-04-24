@@ -183,3 +183,4 @@ config/device_topology_request.json
 config/config.yaml
 config/device_topology_sim.json
 config/device_status
+docs/example/qubex_backend_debug.ipynb

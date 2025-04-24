@@ -6,10 +6,22 @@
 make generate-config
 ```
 
+## Locally run the server
+
+```bash
+uv sync --no-group qubex --no-dev
+```
+
+and then run the server:
+
+```bash
+make run
+```
+
 ## Running the server in a container
 
 ```bash
-docker compose up
+docker compose up device-gateway
 ```
 
 ## Change Device Status
@@ -84,6 +96,12 @@ make download-qubex-config
 make generate-device-topology
 ```
 
+### Running the server in a container
+
+```bash
+docker compose up device-gateway-qubex
+```
+
 ## Configuration
 
 ### Configuration File
@@ -98,7 +116,7 @@ The configuration file is located at `config/config.yaml`. The configuration fil
   - `provider_id`: The ID of the provider.
   - `max_qubits`: The maximum number of qubits supported by the device.
   - `max_shots`: The maximum number of shots supported by the device.
-- `simulator_mode`: Whether to run the server in simulator mode or not.
+- `backend`: The backend to use. Available options are "qulacs" and "qubex".
 - `device_status_path`: The path to the device status file.
 - `device_topology_json_path`: The path to the device topology JSON file.
 
@@ -108,12 +126,17 @@ The configuration file is located at `config/config.yaml`. The configuration fil
 proto:
   max_workers: 2
   address: "[::]:51021"
+
 device_info:
   device_id: "qulacs"
   provider_id: "oqtopus"
   max_qubits: 3
   max_shots: 10000
-simulator_mode: true
+
+# Backend configuration
+backend: "qulacs" # Available options: "qulacs", "qubex"
+
+# Common backend settings
 device_status_path: config/device_status
 device_topology_json_path: config/device_topology_sim.json
 ```
@@ -124,12 +147,17 @@ device_topology_json_path: config/device_topology_sim.json
 proto:
   max_workers: 2
   address: "[::]:51021"
+
 device_info:
   device_id: "anemone"
   provider_id: "oqtopus"
   max_qubits: 3
   max_shots: 10000
-simulator_mode: false
+
+# Backend configuration
+backend: "qubex" # Available options: "qulacs", "qubex"
+
+# Common backend settings
 device_status_path: config/device_status
-device_topology_json_path: config/device_topology.json
+device_topology_json_path: config/device_topology_sim.json
 ```
