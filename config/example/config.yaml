@@ -1,11 +1,33 @@
 proto:
   max_workers: 2
   address: "[::]:51021"
+
 device_info:
   device_id: "qulacs"
-  provider_id: "qiqb"
+  provider_id: "oqtopus"
   max_qubits: 3
   max_shots: 10000
-simulator_mode: true
+
+# Plugin configuration
+plugin:
+  name: "qulacs" # Available options: "qulacs", "qubex"
+  backend:
+    module_path: "device_gateway.plugins.qulacs.backend"
+    class_name: "QulacsBackend"
+  circuit:
+    module_path: "device_gateway.plugins.qulacs.circuit"
+    class_name: "QulacsCircuit"
+
+# Qubex plugin configuration. Uncomment to use Qubex backend
+# plugin:
+#   name: "qubex" # Available options: "qulacs", "qubex"
+#   backend:
+#     module_path: "device_gateway.plugins.qubex.backend"
+#     class_name: "QubexBackend"
+#   circuit:
+#     module_path: "device_gateway.plugins.qubex.circuit"
+#     class_name: "QubexCircuit"
+
+# Common backend settings
 device_status_path: config/device_status
 device_topology_json_path: config/device_topology_sim.json

@@ -1,0 +1,35 @@
+ARG PYTHON_VERSION=3.12
+
+FROM python:$PYTHON_VERSION-slim
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+WORKDIR /app
+
+# install tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  build-essential \
+  cmake \
+  bison \
+  flex \
+  libboost-all-dev \
+  curl \
+  git \
+  iproute2 \
+  procps \
+  tar \
+  vim && \
+  curl -L "https://github.com/fullstorydev/grpcurl/releases/download/v1.9.3/grpcurl_1.9.3_linux_x86_64.tar.gz" | tar -xz -C /usr/local/bin && \
+  chmod +x /usr/local/bin/grpcurl && \
+  apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY . /app
+
+# setup user
+RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app
+USER appuser
+
+# install python dependencies including qubex
+RUN uv sync --all-groups
+
+# run application
+CMD ["uv", "run", "python", "src/device_gateway/service.py", "-c", "config/config.yaml", "-l", "config/logging.yaml"]
