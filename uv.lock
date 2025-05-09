@@ -585,7 +585,7 @@ dev = [
     { name = "python-json-logger", specifier = ">=2.0.7" },
     { name = "ruff", specifier = ">=0.11.0" },
 ]
-qubex = [{ name = "qubex", extras = ["backend"], git = "https://github.com/amachino/qubex.git?tag=v1.3.3" }]
+qubex = [{ name = "qubex", extras = ["backend"], git = "https://github.com/amachino/qubex.git?tag=v1.3.4rc1" }]
 
 [[package]]
 name = "dill"
@@ -1963,15 +1963,6 @@ wheels = [
 ]
 
 [[package]]
-name = "ping3"
-version = "4.0.8"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/20/75/31ad8e1e466caeed891c39275be21d585b1490af1f4e5d747d4e45b54e9d/ping3-4.0.8.tar.gz", hash = "sha256:9ab460eb57f006b71f977a693d157215aabd6bbcbc6cd6428b6951eaae0c2875", size = 17826, upload_time = "2024-04-10T16:54:54.983Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e6/f4/4070daca3da5bbc3ef5e622d68f979e034e5bf678416817918e51a1b2907/ping3-4.0.8-py3-none-any.whl", hash = "sha256:b5c294851968b4229e9af69d252778241cb84221594b436a8677419c31925594", size = 14007, upload_time = "2024-04-10T16:54:53.014Z" },
-]
-
-[[package]]
 name = "pip"
 version = "24.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2101,6 +2092,29 @@ wheels = [
 ]
 
 [[package]]
+name = "pybind11-stubgen"
+version = "2.5.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/67/c6/2c695a3f94a9dfa1920a40dc6b36e9d4d0e1ac089b7e35d7237a29f4c400/pybind11_stubgen-2.5.3.tar.gz", hash = "sha256:72d6122749ed95dfcdd121cc3b8f493cbadb4755f38a0682e2265b5a041c25cb", size = 24756, upload_time = "2025-02-24T14:04:08.851Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cd/c3/fb2e68bf0b0bb1c233854f4f9ad7c388c7497d80a60597efc1640356ab7a/pybind11_stubgen-2.5.3-py3-none-any.whl", hash = "sha256:7c6a642027e5dcb6a734822cac0cc8600ceadccd9b0339e1fab0da632c3de0fa", size = 29894, upload_time = "2025-02-24T14:04:07.153Z" },
+]
+
+[[package]]
+name = "pycairo"
+version = "1.28.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/40/d9/412da520de9052b7e80bfc810ec10f5cb3dbfa4aa3e23c2820dc61cdb3d0/pycairo-1.28.0.tar.gz", hash = "sha256:26ec5c6126781eb167089a123919f87baa2740da2cca9098be8b3a6b91cc5fbc", size = 662477, upload_time = "2025-04-14T20:11:08.218Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a9/d7/206d7945aac5c6c889e7fea4011410d1311455a1d8dfce66106d8d700b7f/pycairo-1.28.0-cp312-cp312-win32.whl", hash = "sha256:c00cfbb7f30eb7ca1d48886712932e2d91e8835a8496f4e423878296ceba573e", size = 750594, upload_time = "2025-04-14T20:10:53.72Z" },
+    { url = "https://files.pythonhosted.org/packages/2e/ba/259fc9a4d3afdad1e5b9db52b9d8a5df67f70dd787167185e8ec8a1af007/pycairo-1.28.0-cp312-cp312-win_amd64.whl", hash = "sha256:d50d190f5033992b55050b9f337ee42a45c3568445d5e5d7987bab96c278d8a6", size = 841767, upload_time = "2025-04-14T20:10:56.711Z" },
+    { url = "https://files.pythonhosted.org/packages/c0/08/aa0903612ea0e8686ad6af58d4fb9cbab8ee0b0831201cddf7abd578d045/pycairo-1.28.0-cp312-cp312-win_arm64.whl", hash = "sha256:957e0340ee1c279d197d4f7cfa96f6d8b48e453eec711fca999748d752468ff4", size = 691687, upload_time = "2025-04-16T19:30:23.729Z" },
+    { url = "https://files.pythonhosted.org/packages/59/a7/c3e5ed55781dfe1b31eb4a2482aeae707671f3d36b0ea53a1722f4a3dfe9/pycairo-1.28.0-cp313-cp313-win32.whl", hash = "sha256:d13352429d8a08a1cb3607767d23d2fb32e4c4f9faa642155383980ec1478c24", size = 750594, upload_time = "2025-04-14T20:10:59.284Z" },
+    { url = "https://files.pythonhosted.org/packages/8b/1c/ebadd290748aff3b6bc35431114d41e7a42f40a4b988c2aaf2dfed5d8156/pycairo-1.28.0-cp313-cp313-win_amd64.whl", hash = "sha256:082aef6b3a9dcc328fa648d38ed6b0a31c863e903ead57dd184b2e5f86790140", size = 841774, upload_time = "2025-04-14T20:11:01.79Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/ce/a3f5f1946613cd8a4654322b878c59f273c6e9b01dfadadd3f609070e0b9/pycairo-1.28.0-cp313-cp313-win_arm64.whl", hash = "sha256:026afd53b75291917a7412d9fe46dcfbaa0c028febd46ff1132d44a53ac2c8b6", size = 691675, upload_time = "2025-04-16T19:30:26.565Z" },
+]
+
+[[package]]
 name = "pycparser"
 version = "2.22"
 source = { registry = "https://pypi.org/simple" }
@@ -2155,6 +2169,15 @@ sdist = { url = "https://files.pythonhosted.org/packages/7c/2d/c3338d48ea6cc0feb
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8a/0b/9fcc47d19c48b59121088dd6da2488a49d5f72dacf8262e2790a1d2c7d15/pygments-2.19.1-py3-none-any.whl", hash = "sha256:9ea1544ad55cecf4b8242fab6dd35a93bbce657034b0611ee383099054ab6d8c", size = 1225293, upload_time = "2025-01-06T17:26:25.553Z" },
 ]
+
+[[package]]
+name = "pygobject"
+version = "3.50.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pycairo" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2b/58/d34e67a79631177e3c08e7d02b5165147f590171f2cae6769502af5f7f7e/pygobject-3.50.0.tar.gz", hash = "sha256:4500ad3dbf331773d8dedf7212544c999a76fc96b63a91b3dcac1e5925a1d103", size = 1080367, upload_time = "2024-09-12T12:05:22.579Z" }
 
 [[package]]
 name = "pylabrad"
@@ -2236,6 +2259,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/25/69/5f1e57f6c5a39f81411b550027bf72842c4567ff5fd572bed1edc9e4b5d9/pytest_cov-6.1.1.tar.gz", hash = "sha256:46935f7aaefba760e716c2ebfbe1c216240b9592966e7da99ea8292d4d3e2a0a", size = 66857, upload_time = "2025-04-05T14:07:51.592Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/28/d0/def53b4a790cfb21483016430ed828f64830dd981ebe1089971cd10cab25/pytest_cov-6.1.1-py3-none-any.whl", hash = "sha256:bddf29ed2d0ab6f4df17b4c55b0a657287db8684af9c42ea546b21b1041b3dde", size = 23841, upload_time = "2025-04-05T14:07:49.641Z" },
+]
+
+[[package]]
+name = "pytest-mock"
+version = "3.14.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c6/90/a955c3ab35ccd41ad4de556596fa86685bf4fc5ffcc62d22d856cfd4e29a/pytest-mock-3.14.0.tar.gz", hash = "sha256:2719255a1efeceadbc056d6bf3df3d1c5015530fb40cf347c0f9afac88410bd0", size = 32814, upload_time = "2024-03-21T22:14:04.964Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f2/3b/b26f90f74e2986a82df6e7ac7e319b8ea7ccece1caec9f8ab6104dc70603/pytest_mock-3.14.0-py3-none-any.whl", hash = "sha256:0b72c38033392a5f4621342fe11e9219ac11ec9d375f8e2a0c164539e0d70f6f", size = 9863, upload_time = "2024-03-21T22:14:02.694Z" },
 ]
 
 [[package]]
@@ -2420,22 +2455,27 @@ wheels = [
 [[package]]
 name = "qubecalib"
 version = "3.1.9"
-source = { git = "https://github.com/qiqb-osaka/qube-calib.git?rev=3.1.9#02088329c7e7fede064d745db4c16e2814e23efe" }
+source = { git = "https://github.com/qiqb-osaka/qube-calib.git?rev=542c30b#542c30bfb268f7f2df0f7a072460eea13d381629" }
 dependencies = [
     { name = "e7awgsw" },
     { name = "jupyter" },
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "plotly" },
+    { name = "pygobject" },
+    { name = "pytest" },
+    { name = "pytest-mock" },
+    { name = "pyyaml" },
     { name = "quel-clock-master" },
     { name = "quel-ic-config" },
     { name = "tqdm" },
+    { name = "types-pyyaml" },
 ]
 
 [[package]]
 name = "qubex"
-version = "1.3.3+87f12c3"
-source = { git = "https://github.com/amachino/qubex.git?tag=v1.3.3#87f12c3c85975e26b7c6b2d458e441edbcc69a78" }
+version = "1.3.4rc1+44ff2d7"
+source = { git = "https://github.com/amachino/qubex.git?tag=v1.3.4rc1#44ff2d7bcdb84fbfbc92310b42cefe14a461bb1d" }
 dependencies = [
     { name = "cma" },
     { name = "httpx" },
@@ -2468,19 +2508,22 @@ backend = [
 [[package]]
 name = "quel-clock-master"
 version = "0.1.6"
-source = { git = "https://github.com/quel-inc/quelware.git?subdirectory=quel_clock_master&rev=0.8.10#7e41cd7b02416fca5fb9a7459d2fd05e961c2fe2" }
+source = { git = "https://github.com/quel-inc/quelware.git?subdirectory=quel_clock_master&rev=0.8.13#de4dd6caf967b025b7d529e41a1d6e8c3029cc66" }
 
 [[package]]
 name = "quel-ic-config"
-version = "0.8.10"
-source = { git = "https://github.com/quel-inc/quelware.git?subdirectory=quel_ic_config&rev=0.8.10#7e41cd7b02416fca5fb9a7459d2fd05e961c2fe2" }
+version = "0.8.13"
+source = { git = "https://github.com/quel-inc/quelware.git?subdirectory=quel_ic_config&rev=0.8.13#de4dd6caf967b025b7d529e41a1d6e8c3029cc66" }
 dependencies = [
     { name = "aiocoap" },
     { name = "e7awgsw" },
+    { name = "matplotlib" },
     { name = "numpy" },
     { name = "packaging" },
-    { name = "ping3" },
+    { name = "pybind11-stubgen" },
+    { name = "pycairo" },
     { name = "pydantic" },
+    { name = "pygobject" },
     { name = "pyyaml" },
     { name = "quel-clock-master" },
 ]
@@ -3005,6 +3048,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a9/60/47d92293d9bc521cd2301e423a358abfac0ad409b3a1606d8fbae1321961/types_python_dateutil-2.9.0.20241206.tar.gz", hash = "sha256:18f493414c26ffba692a72369fea7a154c502646301ebfe3d56a04b3767284cb", size = 13802, upload_time = "2024-12-06T02:56:41.019Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0f/b3/ca41df24db5eb99b00d97f89d7674a90cb6b3134c52fb8121b6d8d30f15c/types_python_dateutil-2.9.0.20241206-py3-none-any.whl", hash = "sha256:e248a4bc70a486d3e3ec84d0dc30eec3a5f979d6e7ee4123ae043eedbb987f53", size = 14384, upload_time = "2024-12-06T02:56:39.412Z" },
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.20250402"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/68/609eed7402f87c9874af39d35942744e39646d1ea9011765ec87b01b2a3c/types_pyyaml-6.0.12.20250402.tar.gz", hash = "sha256:d7c13c3e6d335b6af4b0122a01ff1d270aba84ab96d1a1a1063ecba3e13ec075", size = 17282, upload_time = "2025-04-02T02:56:00.235Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ed/56/1fe61db05685fbb512c07ea9323f06ea727125951f1eb4dff110b3311da3/types_pyyaml-6.0.12.20250402-py3-none-any.whl", hash = "sha256:652348fa9e7a203d4b0d21066dfb00760d3cbd5a15ebb7cf8d33c88a49546681", size = 20329, upload_time = "2025-04-02T02:55:59.382Z" },
 ]
 
 [[package]]
