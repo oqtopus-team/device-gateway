@@ -54,4 +54,4 @@ addopts = "--cov=src --cov-report=xml"
 pythonpath = ["src","src/device_gateway","src/device_gateway/qpu_interface","src/device_gateway/qpu_interface","src/device_gateway/qpu_interface/v2"]
 
 [tool.uv.sources]
-qubex = { git = "https://github.com/amachino/qubex.git", tag = "v1.3.3" }
+qubex = { git = "https://github.com/amachino/qubex.git", tag = "v1.3.4rc1" }

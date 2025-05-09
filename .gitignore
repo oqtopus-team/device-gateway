@@ -184,3 +184,6 @@ config/config.yaml
 config/device_topology_sim.json
 config/device_status
 docs/example/qubex_backend_debug.ipynb
+docs/example/qubex_backend_debug_pulse.ipynb
+docs/example/qubex_backend_debug_pulse_v2.ipynb
+docs/example/qubex_backend_debug_pulse_cloud.ipynb
