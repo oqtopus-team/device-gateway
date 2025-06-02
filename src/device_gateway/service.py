@@ -100,6 +100,15 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             result=result,
         )
 
+    def _remove_zero_values(self, d: dict[str, int]) -> dict[str, int]:
+        """remove zero values from a dictionary.
+        Args:
+            d: Dictionary with string keys and integer values.
+        Returns:
+            Dictionary with zero values removed.
+        """
+        return {k: v for k, v in d.items() if v != 0}
+
     def _execute_job(self, request: qpu_pb2.CallJobRequest) -> tuple[dict, str]:
         """Execute quantum job.
 
@@ -123,6 +132,8 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         circuit = self._circuit_manager.get_circuit(self.backend_name, self.backend)
         compiled_circuit = circuit.compile(qc)
         counts = self.backend.execute(compiled_circuit, shots=request.shots)
+        counts = self._remove_zero_values(counts)
+        logger.info(f"counts={counts}")
         return counts, SUCCESS_MESSAGE
 
     def CallJob(self, request: qpu_pb2.CallJobRequest, context):  # type: ignore[name-defined]
