@@ -16,6 +16,7 @@ dependencies = [
     "qiskit-qasm3-import>=0.5.1",
     "pyyaml>=6.0.2",
     "grpcio-reflection>=1.62.3",
+    "pendulum>=3.1.0",
 ]
 
 [dependency-groups]
@@ -54,4 +55,4 @@ addopts = "--cov=src --cov-report=xml"
 pythonpath = ["src","src/device_gateway","src/device_gateway/qpu_interface","src/device_gateway/qpu_interface","src/device_gateway/qpu_interface/v2"]
 
 [tool.uv.sources]
-qubex = { git = "https://github.com/amachino/qubex.git", tag = "v1.3.4rc1" }
+qubex = { git = "https://github.com/amachino/qubex.git", tag = "v1.3.7rc1" }

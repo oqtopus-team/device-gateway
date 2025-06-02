@@ -16,6 +16,7 @@ logger = logging.getLogger("device_gateway")
 class QubexBackend(BaseBackend):
     def __init__(self, config: dict):
         super().__init__(config)
+        logger.info(f"Qubex version: {get_package_version('qubex')}")
         self._experiment = Experiment(
             chip_id=os.getenv("CHIP_ID", "64Q"),
             qubits=self.qubits,
@@ -40,6 +41,7 @@ class QubexBackend(BaseBackend):
         """
         note = {}
         for qubit in self.qubits:
+            logger.info(f"Building classifier for qubit {qubit}")
             res = self._experiment.build_classifier(targets=qubit, plot=False)
             note[qubit] = {
                 "p0m1": 1 - res["readout_fidelties"][qubit][0],
