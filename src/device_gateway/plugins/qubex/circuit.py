@@ -1,11 +1,14 @@
 import logging
+from typing import TYPE_CHECKING
 
 from qiskit import QuantumCircuit as QiskitQuantumCircuit
 from qubex.pulse import PulseSchedule, VirtualZ
 
 from device_gateway.core.base_circuit import BaseCircuit
 from device_gateway.core.gate_set import SUPPORTED_GATES
-from device_gateway.plugins.qubex.backend import QubexBackend
+
+if TYPE_CHECKING:
+    from device_gateway.plugins.qubex.backend import QubexBackend
 
 logger = logging.getLogger("device_gateway")
 
@@ -13,7 +16,7 @@ logger = logging.getLogger("device_gateway")
 class QubexCircuit(BaseCircuit):
     """Qubex circuit implementation."""
 
-    def __init__(self, backend: QubexBackend):
+    def __init__(self, backend: "QubexBackend"):
         """Initialize the circuit with backend.
         Args:
             backend: Backend to execute the circuit on

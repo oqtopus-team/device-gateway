@@ -9,6 +9,7 @@ from qubex.pulse import PulseSchedule
 from qubex.version import get_package_version
 
 from device_gateway.core.base_backend import BaseBackend
+from device_gateway.plugins.qubex.circuit import QubexCircuit
 
 logger = logging.getLogger("device_gateway")
 
@@ -79,7 +80,10 @@ class QubexBackend(BaseBackend):
             device_topology["qubits"][id] = qubit_info
         self.save_device_topology(device_topology)
 
-    def execute(self, circuit: PulseSchedule, shots: int = DEFAULT_SHOTS):
+    def _get_circuit(self) -> QubexCircuit:
+        return QubexCircuit(self)
+
+    def _execute(self, circuit: PulseSchedule, shots: int = DEFAULT_SHOTS):
         """
         Execute the compiled circuit for a specified number of shots.
         The compiled_circuit is produced by the PulseSchedule class.
