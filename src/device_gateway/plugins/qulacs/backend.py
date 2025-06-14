@@ -23,20 +23,18 @@ class QulacsBackend(BaseBackend):
         Execute the compiled circuit for a specified number of shots.
         The circuit is produced by the Circuit class.
         """
-        logger.info(f"Executing quantum circuit with {shots} shots")
         state = QuantumState(circuit.get_qubit_count())
         circuit.update_quantum_state(state)
         result = Counter(state.sampling(shots))
         counts = {}
         for key, value in result.items():
             counts[format(key, "0" + str(circuit.get_qubit_count()) + "b")] = value
-        logger.info(f"Execution complete, counts: {counts}")
         return counts
 
     def _remap_counts(
         self, full_counts: dict[str, int], measure_map: dict[int, int], bit_count: int
     ) -> dict[str, int]:
-        result = Counter()
+        result: Counter[str] = Counter()
 
         for bitstring, count in full_counts.items():
             # reverse the bitstring so bit index 0 is at the rightmost position
@@ -72,7 +70,6 @@ class QulacsBackend(BaseBackend):
                 qubit_index = qc.find_bit(instruction.qubits[0])[0]
                 clbit_index = qc.find_bit(instruction.clbits[0])[0]
                 measure_map[clbit_index] = qubit_index
-        logger.debug(f"measure_map={measure_map}")
 
         bit_count = len(qc.clbits)
         counts = self._remap_counts(counts, measure_map, bit_count)
