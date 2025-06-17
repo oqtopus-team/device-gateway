@@ -2,13 +2,14 @@ import logging
 import os
 
 import numpy as np
+from qiskit.qasm3 import loads
 from qiskit.result import Counts, LocalReadoutMitigator, ProbDistribution
 from qubex.experiment import Experiment
 from qubex.measurement.measurement import DEFAULT_INTERVAL, DEFAULT_SHOTS
 from qubex.pulse import PulseSchedule
 from qubex.version import get_package_version
 
-from device_gateway.core.base_backend import BaseBackend
+from device_gateway.core.base_backend import SUCCESS_MESSAGE, BaseBackend
 from device_gateway.plugins.qubex.circuit import QubexCircuit
 
 logger = logging.getLogger("device_gateway")
@@ -18,6 +19,7 @@ class QubexBackend(BaseBackend):
     def __init__(self, config: dict):
         super().__init__(config)
         logger.info(f"Qubex version: {get_package_version('qubex')}")
+        self._execute_readout_calibration = True
         self._experiment = Experiment(
             chip_id=os.getenv("CHIP_ID", "64Q"),
             qubits=self.qubits,
@@ -50,7 +52,7 @@ class QubexBackend(BaseBackend):
             }
         return note
 
-    def readout_calibration(self):
+    def _readout_calibration(self):
         """
         Perform readout calibration for the qubits.
         This method is called during the initialization of the QubexBackend.
@@ -95,6 +97,22 @@ class QubexBackend(BaseBackend):
             shots=shots,
             interval=DEFAULT_INTERVAL,
         ).get_counts(targets=self.classical_registers)
+
+    def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
+        """Execute the compiled circuit for a specified number of shots.
+        The compiled_circuit is produced by the PulseSchedule class.
+        """
+        if self.is_active() and self._execute_readout_calibration:
+            logger.info("Performing readout calibration")
+            self._readout_calibration()
+            self._execute_readout_calibration = False
+        qc = loads(program)
+        circuit = self._get_circuit()
+        compiled_circuit = circuit.compile(qc)
+        counts = self._execute(compiled_circuit, shots=shots)
+        counts = self._remove_zero_values(counts)
+        logger.info(f"counts={counts}")
+        return counts, SUCCESS_MESSAGE
 
     def qubex_error_mitigation(
         self,
