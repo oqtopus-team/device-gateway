@@ -1,8 +1,14 @@
 import json
 import logging
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
+from typing import Any
+
+from qiskit.qasm3 import loads
 
 logger = logging.getLogger("device_gateway")
+
+# Constants
+SUCCESS_MESSAGE = "job is succeeded"
 
 
 class BaseBackend(metaclass=ABCMeta):
@@ -161,10 +167,62 @@ class BaseBackend(metaclass=ABCMeta):
         """
         return self.physical_label_to_physical_index[physical_label]
 
-    def execute(self, circuit, shots: int = 1024) -> dict:
+    @abstractmethod
+    def _get_circuit(self) -> Any:
+        """Get the circuit object for the backend.
+
+        This method should be implemented in the derived class.
         """
-        Execute the compiled circuit for a specified number of shots.
-        The compiled_circuit is produced by the Circuit class.
-        Implement this method in the derived class.
+        pass
+
+    @abstractmethod
+    def _execute(self, circuit: Any, shots: int = 1024) -> dict:
+        """Execute the compiled circuit for a specified number of shots.
+
+        This method should be implemented in the derived class.
+        This method should return a dictionary with string keys and integer values,
+        where the keys are binary strings representing measurement results
+        and the values are the counts of those results.
+
+        Args:
+            circuit: The compiled circuit to be executed.
+            shots: The number of shots to execute the circuit.
+        Returns:
+            A dictionary containing the counts of measurement results,
+            e.g., {"000": 512, "111": 512}.
+
         """
-        raise NotImplementedError("This method is not implemented")
+        pass
+
+    def _remove_zero_values(self, d: dict[str, int]) -> dict[str, int]:
+        """Remove zero values from a dictionary.
+
+        Args:
+            d: Dictionary with string keys and integer values.
+        Returns:
+            Dictionary with zero values removed.
+
+        """
+        return {k: v for k, v in d.items() if v != 0}
+
+    def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
+        """Execute the circuit for a specified number of shots.
+
+        This method parses, compiles, and executes the circuit, and removes results with zero counts.
+
+        Args:
+            program: The circuit to be executed, given in OpenQASM 3 format.
+            shots: The number of shots to execute the circuit.
+        Returns:
+            A tuple containing the counts of measurement results and a success message.
+            The counts are in the format {"000": 512, "111": 512}.
+
+        """
+        qc = loads(program)
+        circuit = self._get_circuit()
+        compiled_circuit = circuit.compile(qc)
+        counts = self._execute(compiled_circuit, shots=shots)
+        counts = self._remove_zero_values(counts)
+        logger.info(f"counts={counts}")
+
+        return counts, SUCCESS_MESSAGE
