@@ -40,7 +40,6 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             config: Configuration dictionary.
         """
         super().__init__()
-        self._execute_readout_calibration = True
         self._backend_manager = BackendPluginManager()
         self._initialize_backend(config)
         logger.info(f"ServerImpl initialized with backend: {self.backend_name}")
