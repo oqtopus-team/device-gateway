@@ -10,12 +10,10 @@ from pathlib import Path
 import grpc
 import yaml  # type: ignore[import]
 from grpc_reflection.v1alpha import reflection
-from qiskit.qasm3 import loads
 
 from device_gateway.core.plugin_manager import (
     SUPPORTED_BACKENDS,
     BackendPluginManager,
-    CircuitPluginManager,
 )
 from device_gateway.gen.qpu.v1 import qpu_pb2, qpu_pb2_grpc
 
@@ -40,13 +38,9 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
 
         Args:
             config: Configuration dictionary.
-            backend_manager: Backend plugin manager instance. If None, creates new instance.
-            circuit_manager: Circuit plugin manager instance. If None, creates new instance.
         """
         super().__init__()
-        self._execute_readout_calibration = True
         self._backend_manager = BackendPluginManager()
-        self._circuit_manager = CircuitPluginManager()
         self._initialize_backend(config)
         logger.info(f"ServerImpl initialized with backend: {self.backend_name}")
         logger.info(f"device_info={self.backend.device_info}")
@@ -69,7 +63,6 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
 
         try:
             self._backend_manager.load_backend(config={"plugin": plugin_config})
-            self._circuit_manager.load_circuit(config={"plugin": plugin_config})
         except ImportError as e:
             logger.error(f"Failed to load plugin {name}: {str(e)}")
             raise
@@ -109,33 +102,6 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         """
         return {k: v for k, v in d.items() if v != 0}
 
-    def _execute_job(self, request: qpu_pb2.CallJobRequest) -> tuple[dict, str]:
-        """Execute quantum job.
-
-        Args:
-            request: Job request containing program and shots.
-
-        Returns:
-            Tuple of (counts, message).
-
-        Raises:
-            Exception: If job execution fails.
-        """
-        if self._execute_readout_calibration and self.backend.is_qpu():
-            logger.info("Start readout calibration...")
-            self.backend.readout_calibration()
-            logger.info("Readout calibration is done")
-            self._execute_readout_calibration = False
-
-        logger.info(f"program={request.program}")
-        qc = loads(request.program)
-        circuit = self._circuit_manager.get_circuit(self.backend_name, self.backend)
-        compiled_circuit = circuit.compile(qc)
-        counts = self.backend.execute(compiled_circuit, shots=request.shots)
-        counts = self._remove_zero_values(counts)
-        logger.info(f"counts={counts}")
-        return counts, SUCCESS_MESSAGE
-
     def CallJob(self, request: qpu_pb2.CallJobRequest, context):  # type: ignore[name-defined]
         """Execute quantum job and return results.
 
@@ -158,7 +124,8 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                 )
                 return self._create_error_response(ERROR_DEVICE_INACTIVE)
 
-            counts, message = self._execute_job(request)
+            logger.info(f"program={request.program}, shots={request.shots}")
+            counts, message = self.backend.execute(request.program, shots=request.shots)
             result = qpu_pb2.Result(counts=counts, message=message)  # type: ignore[attr-defined]
             response = qpu_pb2.CallJobResponse(  # type: ignore[attr-defined]
                 status=qpu_pb2.JobStatus.JOB_STATUS_SUCCESS,  # type: ignore[attr-defined]

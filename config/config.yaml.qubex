@@ -14,9 +14,6 @@ device_info:
 #   backend:
 #     module_path: "device_gateway.plugins.qulacs.backend"
 #     class_name: "QulacsBackend"
-#   circuit:
-#     module_path: "device_gateway.plugins.qulacs.circuit"
-#     class_name: "QulacsCircuit"
 
 # Qubex plugin configuration. Uncomment to use Qubex backend
 plugin:
@@ -24,9 +21,6 @@ plugin:
   backend:
     module_path: "device_gateway.plugins.qubex.backend"
     class_name: "QubexBackend"
-  circuit:
-    module_path: "device_gateway.plugins.qubex.circuit"
-    class_name: "QubexCircuit"
 
 # Common backend settings
 device_status_path: config/device_status

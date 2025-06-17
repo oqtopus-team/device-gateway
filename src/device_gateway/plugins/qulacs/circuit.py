@@ -1,11 +1,14 @@
 import logging
+from typing import TYPE_CHECKING
 
 from qiskit import QuantumCircuit as QiskitQuantumCircuit
 from qulacs import QuantumCircuit as QulacsQuantumCircuit
 
 from device_gateway.core.base_circuit import BaseCircuit
 from device_gateway.core.gate_set import SUPPORTED_GATES
-from device_gateway.plugins.qulacs.backend import QulacsBackend
+
+if TYPE_CHECKING:
+    from device_gateway.plugins.qulacs.backend import QulacsBackend
 
 logger = logging.getLogger("device_gateway")
 
@@ -13,7 +16,7 @@ logger = logging.getLogger("device_gateway")
 class QulacsCircuit(BaseCircuit):
     """Qulacs circuit implementation."""
 
-    def __init__(self, backend: QulacsBackend):
+    def __init__(self, backend: "QulacsBackend"):
         """Initialize the circuit with backend.
 
         Args:
