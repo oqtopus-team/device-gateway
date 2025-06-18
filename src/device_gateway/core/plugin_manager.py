@@ -8,8 +8,6 @@ from device_gateway.core.base_backend import BaseBackend
 
 logger = logging.getLogger("device_gateway")
 
-SUPPORTED_BACKENDS = ("qulacs", "qubex")  # Tuple of supported backend names
-
 
 class BackendPluginManager:
     """Backend plugin manager."""

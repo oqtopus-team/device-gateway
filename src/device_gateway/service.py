@@ -12,7 +12,6 @@ import yaml  # type: ignore[import]
 from grpc_reflection.v1alpha import reflection
 
 from device_gateway.core.plugin_manager import (
-    SUPPORTED_BACKENDS,
     BackendPluginManager,
 )
 from device_gateway.gen.qpu.v1 import qpu_pb2, qpu_pb2_grpc
@@ -57,10 +56,6 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             ImportError: If the specified plugin is not supported.
         """
         name = plugin_config.get("name")
-        if name not in SUPPORTED_BACKENDS:
-            logger.error(ERROR_UNSUPPORTED_BACKEND.format(plugin_config))
-            raise ImportError(ERROR_UNSUPPORTED_BACKEND.format(plugin_config))
-
         try:
             self._backend_manager.load_backend(config={"plugin": plugin_config})
         except ImportError as e:

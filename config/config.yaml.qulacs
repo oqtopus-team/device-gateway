@@ -10,17 +10,22 @@ device_info:
 
 # Plugin configuration
 plugin:
-  name: "qulacs" # Available options: "qulacs", "qubex"
   backend:
     module_path: "device_gateway.plugins.qulacs.backend"
     class_name: "QulacsBackend"
 
 # Qubex plugin configuration. Uncomment to use Qubex backend
 # plugin:
-#   name: "qubex" # Available options: "qulacs", "qubex"
 #   backend:
 #     module_path: "device_gateway.plugins.qubex.backend"
 #     class_name: "QubexBackend"
+
+# Ybex plugin configuration. Uncomment to use Ybex backend
+# plugin:
+#   backend:
+#     module_path: "device_gateway.plugins.ybex.backend"
+#     class_name: "YbexBackend"
+#     command: "uv run python tests/device_gateway/plugins/ybex/external_program_mock.py {shots} {angle}"
 
 # Common backend settings
 device_status_path: config/device_status

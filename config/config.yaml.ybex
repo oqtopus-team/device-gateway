@@ -3,16 +3,16 @@ proto:
   address: "[::]:51021"
 
 device_info:
-  device_id: "qulacs"
-  provider_id: "oqtopus"
-  max_qubits: 3
+  device_id: "anemone"
+  provider_id: "qiqb"
+  max_qubits: 7
   max_shots: 10000
 
 # Plugin configuration
-plugin:
-  backend:
-    module_path: "device_gateway.plugins.qulacs.backend"
-    class_name: "QulacsBackend"
+# plugin:
+#   backend:
+#     module_path: "device_gateway.plugins.qulacs.backend"
+#     class_name: "QulacsBackend"
 
 # Qubex plugin configuration. Uncomment to use Qubex backend
 # plugin:
@@ -21,11 +21,11 @@ plugin:
 #     class_name: "QubexBackend"
 
 # Ybex plugin configuration. Uncomment to use Ybex backend
-# plugin:
-#   backend:
-#     module_path: "device_gateway.plugins.ybex.backend"
-#     class_name: "YbexBackend"
-#     command: "uv run python tests/device_gateway/plugins/ybex/external_program_mock.py {shots} {angle}"
+plugin:
+  backend:
+    module_path: "device_gateway.plugins.ybex.backend"
+    class_name: "YbexBackend"
+    command: "uv run python tests/device_gateway/plugins/ybex/external_program_mock.py {shots} {angle}"
 
 # Common backend settings
 device_status_path: config/device_status
