@@ -205,7 +205,7 @@ class BaseBackend(metaclass=ABCMeta):
         """
         return {k: v for k, v in d.items() if v != 0}
 
-    def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
+    def execute(self, job_id: str, program: str, shots: int = 1024) -> tuple[dict, str]:
         """Execute the circuit for a specified number of shots.
 
         This method parses, compiles, and executes the circuit, and removes results with zero counts.
