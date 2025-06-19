@@ -96,9 +96,18 @@ class QubexBackend(BaseBackend):
             mode="single",
             shots=shots,
             interval=DEFAULT_INTERVAL,
-        ).get_counts(targets=self.classical_registers)
+        )
 
-    def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
+    def _save_memory(self, memory: list[str], filename: str):
+        """
+        Save the memory to a file.
+        This method is called after executing the quantum circuit.
+        """
+        with open(filename, "w") as f:
+            for item in memory:
+                f.write(f"{item}\n")
+
+    def execute(self, job_id: str, program: str, shots: int = 1024) -> tuple[dict, str]:
         """Execute the compiled circuit for a specified number of shots.
         The compiled_circuit is produced by the PulseSchedule class.
         """
@@ -109,9 +118,18 @@ class QubexBackend(BaseBackend):
         qc = loads(program)
         circuit = self._get_circuit()
         compiled_circuit = circuit.compile(qc)
-        counts = self._execute(compiled_circuit, shots=shots)
+        result = self._execute(compiled_circuit, shots=shots)
+        counts = result.get_counts(targets=self.classical_registers)
         counts = self._remove_zero_values(counts)
         logger.info(f"counts={counts}")
+        memory = result.get_memory(targets=self.classical_registers)
+        logger.info(f"memory={memory}")
+        if memory:
+            if not os.path.exists("memories"):
+                os.makedirs("memories")
+            logger.info(f"Saving memory to memories/{job_id}.txt")
+            self._save_memory(memory, f"memories/{job_id}.txt")
+
         return counts, SUCCESS_MESSAGE
 
     def qubex_error_mitigation(
