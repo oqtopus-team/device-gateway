@@ -1,39 +1,61 @@
-ARG PYTHON_VERSION=3.12
+# Use a Python image with uv pre-installed
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-FROM python:$PYTHON_VERSION-slim
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Create appuser with configurable UID and GID to avoid permission issues
+# You can override these values at build time like this:
+#   docker compose build --build-arg UID=$(id -u) --build-arg GID=$(id -g)
+# This ensures that files created in volumes or bind mounts are owned by the correct host user
+ARG UID=1000
+ARG GID=1000
 
+# Install the project into `/app`
 WORKDIR /app
 
-# install tools
+# Install tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  build-essential \
-  cmake \
-  bison \
-  flex \
-  libboost-all-dev \
-  libcairo2-dev \
-  libgirepository1.0-dev \
-  gobject-introspection \
-  gir1.2-gtk-3.0 \
-  curl \
-  git \
-  iproute2 \
-  procps \
-  tar \
-  vim && \
-  curl -L "https://github.com/fullstorydev/grpcurl/releases/download/v1.9.3/grpcurl_1.9.3_linux_x86_64.tar.gz" | tar -xz -C /usr/local/bin && \
-  chmod +x /usr/local/bin/grpcurl && \
-  apt-get clean && rm -rf /var/lib/apt/lists/*
+    build-essential \
+    cmake \
+    bison \
+    flex \
+    libboost-all-dev \
+    curl \
+    git \
+    iproute2 \
+    iputils-ping \
+    jq \
+    procps \
+    tar \
+    vim \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-COPY . /app
+# Install grpcurl (gRPC command-line tool)
+ARG GRPCURL_VERSION=1.9.3
+RUN curl -L https://github.com/fullstorydev/grpcurl/releases/download/v${GRPCURL_VERSION}/grpcurl_${GRPCURL_VERSION}_linux_x86_64.tar.gz \
+    | tar -xz -C /usr/local/bin
 
-# setup user
-RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app
+# Add user
+RUN groupadd -g ${GID} appuser \
+    && useradd -m -u ${UID} -g ${GID} -s /bin/bash -c "" appuser \
+    && chown -R appuser:appuser /app
 USER appuser
 
-# install python dependencies including qubex
-RUN uv sync --all-groups
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
 
-# run application
+# Copy from the cache instead of linking since it's a mounted volume
+ENV UV_LINK_MODE=copy
+
+# Install the project's dependencies using the lockfile and settings
+RUN --mount=type=cache,target=~/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project --no-dev --no-group qubex
+
+# Then, add the rest of the project source code and install it
+# Installing separately from its dependencies allows optimal layer caching
+COPY --chown=appuser:appuser . /app
+RUN --mount=type=cache,target=~/.cache/uv \
+    uv sync --locked --no-dev
+
+# Run the application
 CMD ["uv", "run", "python", "src/device_gateway/service.py", "-c", "config/config.yaml", "-l", "config/logging.yaml"]
