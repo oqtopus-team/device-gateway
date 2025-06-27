@@ -14,6 +14,44 @@ from device_gateway.plugins.qubex.circuit import QubexCircuit
 
 logger = logging.getLogger("device_gateway")
 
+available_qubits = [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    10,
+    11,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    32,
+    33,
+    34,
+    35,
+    37,
+    38,
+    48,
+    49,
+    50,
+    52,
+    53,
+    54,
+    57,
+]
+
 
 class QubexBackend(BaseBackend):
     def __init__(self, config: dict):
@@ -43,13 +81,20 @@ class QubexBackend(BaseBackend):
         This method is called during the initialization of the QubexBackend.
         """
         note = {}
-        for qubit in self.qubits:
+        # for qubit in self.qubits:
+        for qubit in available_qubits:
+            qubit = f"Q{qubit:02d}"  # Format qubit as Q01, Q02, etc.
             logger.info(f"Building classifier for qubit {qubit}")
-            res = self._experiment.build_classifier(targets=qubit, plot=False)
-            note[qubit] = {
-                "p0m1": 1 - res["readout_fidelties"][qubit][0],
-                "p1m0": 1 - res["readout_fidelties"][qubit][1],
-            }
+            try:
+                res = self._experiment.build_classifier(targets=qubit, plot=False)
+                note[qubit] = {
+                    "p0m1": 1 - res["readout_fidelties"][qubit][0],
+                    "p1m0": 1 - res["readout_fidelties"][qubit][1],
+                }
+                logger.info(f"Classifier built for qubit {qubit}: {note[qubit]}")
+            except Exception as e:
+                logger.error(f"Failed to build classifier for qubit {qubit}: {e}")
+                note[qubit] = {"p0m1": 0.0, "p1m0": 0.0}
         return note
 
     def _readout_calibration(self):
@@ -66,7 +111,9 @@ class QubexBackend(BaseBackend):
         This method is called during the initialization of the QubexBackend.
         """
         device_topology = self.device_topology
-        for qubit in self.qubits:
+        # for qubit in self.qubits:
+        for qubit in available_qubits:
+            qubit = f"Q{qubit:02d}"  # Format qubit as Q01, Q02, etc.
             id = self.physical_index(qubit)
             qubit_info = self._search_qubit_by_id(id)
             if qubit_info is not None:
@@ -96,9 +143,18 @@ class QubexBackend(BaseBackend):
             mode="single",
             shots=shots,
             interval=DEFAULT_INTERVAL,
-        ).get_counts(targets=self.classical_registers)
+        )
 
-    def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
+    def _save_memory(self, memory: list[str], filename: str):
+        """
+        Save the memory to a file.
+        This method is called after executing the quantum circuit.
+        """
+        with open(filename, "w") as f:
+            for item in memory:
+                f.write(f"{item}\n")
+
+    def execute(self, job_id: str, program: str, shots: int = 1024) -> tuple[dict, str]:
         """Execute the compiled circuit for a specified number of shots.
         The compiled_circuit is produced by the PulseSchedule class.
         """
@@ -109,9 +165,18 @@ class QubexBackend(BaseBackend):
         qc = loads(program)
         circuit = self._get_circuit()
         compiled_circuit = circuit.compile(qc)
-        counts = self._execute(compiled_circuit, shots=shots)
+        result = self._execute(compiled_circuit, shots=shots)
+        counts = result.get_counts(targets=self.classical_registers)
         counts = self._remove_zero_values(counts)
         logger.info(f"counts={counts}")
+        memory = result.get_memory(targets=self.classical_registers)
+        logger.info(f"memory={memory}")
+        if memory:
+            if not os.path.exists("memories"):
+                os.makedirs("memories")
+            logger.info(f"Saving memory to /app/memories/{job_id}.txt")
+            self._save_memory(memory, f"/app/memories/{job_id}.txt")
+
         return counts, SUCCESS_MESSAGE
 
     def qubex_error_mitigation(

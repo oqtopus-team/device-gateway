@@ -125,7 +125,9 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                 return self._create_error_response(ERROR_DEVICE_INACTIVE)
 
             logger.info(f"program={request.program}, shots={request.shots}")
-            counts, message = self.backend.execute(request.program, shots=request.shots)
+            counts, message = self.backend.execute(
+                job_id, request.program, shots=request.shots
+            )
             result = qpu_pb2.Result(counts=counts, message=message)  # type: ignore[attr-defined]
             response = qpu_pb2.CallJobResponse(  # type: ignore[attr-defined]
                 status=qpu_pb2.JobStatus.JOB_STATUS_SUCCESS,  # type: ignore[attr-defined]
