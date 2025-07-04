@@ -23,8 +23,13 @@ available_qubits = [
     6,
     7,
     8,
+    9,
     10,
     11,
+    12,
+    13,
+    14,
+    15,
     16,
     17,
     18,
@@ -37,19 +42,34 @@ available_qubits = [
     25,
     26,
     27,
+    28,
+    29,
+    30,
+    31,
     32,
     33,
     34,
     35,
+    36,
     37,
     38,
+    40,
+    41,
+    44,
+    45,
+    46,
+    47,
     48,
     49,
     50,
     52,
     53,
     54,
+    55,
     57,
+    60,
+    62,
+    63,
 ]
 
 
@@ -58,7 +78,7 @@ class QubexBackend(BaseBackend):
         super().__init__(config)
         logger.info(f"Qubex version: {get_package_version('qubex')}")
         self._execute_readout_calibration = True
-        self._experiment = Experiment(
+        self._experiment: Experiment = Experiment(
             chip_id=os.getenv("CHIP_ID", "64Q"),
             qubits=self.qubits,
             config_dir=os.getenv("CONFIG_DIR", "/app/qubex_config"),
@@ -67,6 +87,7 @@ class QubexBackend(BaseBackend):
                 "CALIB_NOTE_PATH", "/app/qubex_config/calib_note.json"
             ),
         )
+        self._experiment.linkup()
         logger.info(f"Qubex version: {get_package_version('qubex')}")
 
     def _search_qubit_by_id(self, id):
@@ -81,9 +102,10 @@ class QubexBackend(BaseBackend):
         This method is called during the initialization of the QubexBackend.
         """
         note = {}
+        available = []
         # for qubit in self.qubits:
-        for qubit in available_qubits:
-            qubit = f"Q{qubit:02d}"  # Format qubit as Q01, Q02, etc.
+        for qid in available_qubits:
+            qubit = f"Q{qid:02d}"  # Format qubit as Q01, Q02, etc.
             logger.info(f"Building classifier for qubit {qubit}")
             try:
                 res = self._experiment.build_classifier(targets=qubit, plot=False)
@@ -92,9 +114,11 @@ class QubexBackend(BaseBackend):
                     "p1m0": 1 - res["readout_fidelties"][qubit][1],
                 }
                 logger.info(f"Classifier built for qubit {qubit}: {note[qubit]}")
+                available.append(qid)
             except Exception as e:
                 logger.error(f"Failed to build classifier for qubit {qubit}: {e}")
                 note[qubit] = {"p0m1": 0.0, "p1m0": 0.0}
+        logger.info(f"Available qubits: {available}")
         return note
 
     def _readout_calibration(self):
