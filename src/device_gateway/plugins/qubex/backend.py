@@ -30,6 +30,8 @@ class QubexBackend(BaseBackend):
             ),
         )
         logger.info(f"Qubex version: {get_package_version('qubex')}")
+        self._expeeriment.linkup()
+        logger.info("Qubex experiment linked up successfully")
 
     def _search_qubit_by_id(self, id):
         for qubit in self.device_topology.get("qubits", []):
