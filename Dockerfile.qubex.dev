@@ -18,6 +18,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bison \
     flex \
     libboost-all-dev \
+    libcairo2-dev \
+    libgirepository1.0-dev \
+    gobject-introspection \
+    gir1.2-gtk-3.0 \
     curl \
     git \
     iproute2 \
@@ -47,15 +51,14 @@ ENV UV_LINK_MODE=copy
 
 # Install the project's dependencies using the lockfile and settings
 RUN --mount=type=cache,target=~/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project --no-dev --no-group qubex
+    uv sync --all-groups
 
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
 COPY --chown=appuser:appuser . /app
 RUN --mount=type=cache,target=~/.cache/uv \
-    uv sync --locked --no-dev
+    uv sync --all-groups
 
 # Run the application
 CMD ["uv", "run", "python", "src/device_gateway/service.py", "-c", "config/config.yaml", "-l", "config/logging.yaml"]
