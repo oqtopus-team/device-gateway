@@ -8,4 +8,5 @@ SUPPORTED_GATES = {
     "cx",  # CNOT gate
     "measure",
     "barrier",
+    "delay",
 }

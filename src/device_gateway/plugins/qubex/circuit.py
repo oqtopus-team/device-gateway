@@ -2,7 +2,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from qiskit import QuantumCircuit as QiskitQuantumCircuit
-from qubex.pulse import PulseSchedule, VirtualZ
+from qubex.pulse import Blank, PulseSchedule, VirtualZ
 
 from device_gateway.core.base_circuit import BaseCircuit
 from device_gateway.core.gate_set import SUPPORTED_GATES
@@ -76,6 +76,19 @@ class QubexCircuit(BaseCircuit):
         """Apply barrier."""
         logger.info("Applying barrier")
         return "barrier"
+
+    def delay(self, target: str, duration: float):
+        """Apply delay."""
+        if target not in self._backend.qubits:
+            logger.error(f"Invalid qubit: {target}")
+            raise ValueError(f"Invalid qubit: {target}")
+        if duration <= 0:
+            logger.error(f"Invalid duration: {duration}")
+            raise ValueError(f"Invalid duration: {duration}")
+        logger.info(f"Applying delay for {duration} seconds")
+        with PulseSchedule() as ps:
+            ps.add(target, Blank(duration))
+        return ps
 
     def rz_correction(self, target: str, angle: float):
         """Apply RZ correction."""
@@ -160,7 +173,7 @@ class QubexCircuit(BaseCircuit):
 
         pulse_scheduler = []
         for instruction in qc.data:
-            name = instruction.name
+            name = instruction.operation.name
             if name not in SUPPORTED_GATES:
                 logger.error(f"Unsupported instruction: {name}")
                 raise ValueError(f"Unsupported instruction: {name}")
@@ -205,6 +218,9 @@ class QubexCircuit(BaseCircuit):
                 logger.info(
                     f"virtual qubit: {virtual_index} -> physical index: {physical_index} -> physical label: {self._backend.physical_label(physical_index)}"
                 )
+            elif name == "delay":
+                duration = instruction.params[0]
+                pulse_scheduler.append(self.delay(physical_label, duration))
             elif name == "barrier":
                 pulse_scheduler.append(self.barrier())
             else:
