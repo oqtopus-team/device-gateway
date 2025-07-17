@@ -77,6 +77,31 @@ class QubexCircuit(BaseCircuit):
         logger.info("Applying barrier")
         return "barrier"
 
+    def get_delay_in_ns(self, delay_op, dt_in_ns: float = 2.0):
+        import math
+
+        """Convert delay to nanoseconds, rounded up to nearest multiple of dt_in_ns."""
+        duration = float(delay_op.duration)
+        unit = delay_op.unit
+
+        # Convert duration to nanoseconds based on the unit
+        if unit == "s":
+            duration_ns = duration * 1e9
+        elif unit == "ms":
+            duration_ns = duration * 1e6
+        elif unit == "us":
+            duration_ns = duration * 1e3
+        elif unit == "ns":
+            duration_ns = duration
+        elif unit == "dt":
+            duration_ns = duration * dt_in_ns
+        else:
+            raise ValueError(f"Unsupported unit: {unit}")
+
+        # 2ns is the minimum time step, round up to the nearest multiple of dt_in_ns
+        rounded_ns = math.ceil(duration_ns / dt_in_ns) * dt_in_ns
+        return rounded_ns
+
     def delay(self, target: str, duration: float):
         """Apply delay."""
         if target not in self._backend.qubits:
@@ -219,7 +244,7 @@ class QubexCircuit(BaseCircuit):
                     f"virtual qubit: {virtual_index} -> physical index: {physical_index} -> physical label: {self._backend.physical_label(physical_index)}"
                 )
             elif name == "delay":
-                duration = instruction.params[0]
+                duration = self.get_delay_in_ns(instruction.operation)
                 pulse_scheduler.append(self.delay(physical_label, duration))
             elif name == "barrier":
                 pulse_scheduler.append(self.barrier())

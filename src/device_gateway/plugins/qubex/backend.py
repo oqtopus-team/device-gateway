@@ -30,8 +30,6 @@ class QubexBackend(BaseBackend):
             ),
         )
         logger.info(f"Qubex version: {get_package_version('qubex')}")
-        self._experiment.linkup()
-        logger.info("Qubex experiment linked up successfully")
 
     def _search_qubit_by_id(self, id):
         for qubit in self.device_topology.get("qubits", []):
@@ -105,6 +103,8 @@ class QubexBackend(BaseBackend):
         The compiled_circuit is produced by the PulseSchedule class.
         """
         if self.is_active() and self._execute_readout_calibration:
+            self._experiment.connect()
+            logger.info("Qubex experiment connect successfully")
             logger.info("Performing readout calibration")
             self._readout_calibration()
             self._execute_readout_calibration = False
