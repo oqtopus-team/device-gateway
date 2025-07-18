@@ -42,6 +42,7 @@ available_qubits = [
     "25",
     "26",
     "27",
+    "28",
     "29",
     "30",
     "31",
@@ -57,7 +58,6 @@ available_qubits = [
     "42",
     "43",
     "45",
-    "46",
     "47",
     "48",
     "49",
@@ -65,6 +65,7 @@ available_qubits = [
     "52",
     "53",
     "54",
+    "55",
     "57",
     "60",
     "62",
@@ -86,7 +87,7 @@ class QubexBackend(BaseBackend):
                 "CALIB_NOTE_PATH", "/app/qubex_config/calib_note.json"
             ),
         )
-        self._experiment.linkup()
+        self._experiment.connect()
         logger.info(f"Qubex version: {get_package_version('qubex')}")
 
     def _search_qubit_by_id(self, id):
