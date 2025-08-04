@@ -1,5 +1,9 @@
 #!/bin/bash
-set -e
+set -a
+source .env
+set +a
+
+echo "$QDASH_API_URL"
 
 API_URL=${QDASH_API_URL:-http://localhost:6004/api}
 
