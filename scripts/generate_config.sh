@@ -11,3 +11,5 @@ cp config/example/device_topology_sim.json config/device_topology_sim.json
 echo "geneted config/device_topology_sim.json"
 cp config/example/config.yaml config/config.yaml
 echo "geneted config/config.yaml"
+cp .env.example .env
+echo "geneted .env"
