@@ -28,7 +28,7 @@ class QubexCircuit(BaseCircuit):
         if target not in self._backend.qubits or control not in self._backend.qubits:
             logger.error(f"Invalid qubits for CNOT: {control}, {target}")
             raise ValueError(f"Invalid qubits for CNOT: {control}, {target}")
-        logger.info(
+        logger.debug(
             f"Applying CX gate: {self._backend.physical_index(control)} -> {self._backend.physical_index(target)}, Physical qubits: {control} -> {target}"
         )
         with PulseSchedule([control, target]) as ps:
@@ -40,7 +40,7 @@ class QubexCircuit(BaseCircuit):
         if target not in self._backend.qubits:
             logger.error(f"Invalid qubit: {target}")
             raise ValueError(f"Invalid qubit: {target}")
-        logger.info(
+        logger.debug(
             f"Applying SX gate: {self._backend.physical_index(target)}, Physical qubit: {target}"
         )
         with PulseSchedule([target]) as ps:
@@ -52,7 +52,7 @@ class QubexCircuit(BaseCircuit):
         if target not in self._backend.qubits:
             logger.error(f"Invalid qubit: {target}")
             raise ValueError(f"Invalid qubit: {target}")
-        logger.info(
+        logger.debug(
             f"Applying X gate: {self._backend.physical_index(target)}, Physical qubit: {target}"
         )
         with PulseSchedule([target]) as ps:
@@ -64,7 +64,7 @@ class QubexCircuit(BaseCircuit):
         if target not in self._backend.qubits:
             logger.error(f"Invalid qubit: {target}")
             raise ValueError(f"Invalid qubit: {target}")
-        logger.info(
+        logger.debug(
             f"Applying RZ gate: {self._backend.physical_index(target)}, Physical qubit: {target}, angle={angle}"
         )
         with PulseSchedule([target]) as ps:
@@ -74,7 +74,7 @@ class QubexCircuit(BaseCircuit):
 
     def barrier(self):
         """Apply barrier."""
-        logger.info("Applying barrier")
+        logger.debug("Applying barrier")
         return "barrier"
 
     def get_delay_in_ns(self, delay_op, dt_in_ns: float = 2.0):
@@ -110,7 +110,7 @@ class QubexCircuit(BaseCircuit):
         if duration <= 0:
             logger.error(f"Invalid duration: {duration}")
             raise ValueError(f"Invalid duration: {duration}")
-        logger.info(f"Applying delay for {duration} seconds")
+        logger.debug(f"Applying delay for {duration} seconds")
         with PulseSchedule() as ps:
             ps.add(target, Blank(duration))
         return ps
@@ -193,7 +193,7 @@ class QubexCircuit(BaseCircuit):
         used_physical_qubits, used_physical_couplings = (
             self._used_physical_qubits_and_couplings(qc)
         )
-        logger.info(f"physical_map: {self._backend.physical_map}")
+        logger.debug(f"physical_map: {self._backend.physical_map}")
         classical_bit_mapping = {}
 
         pulse_scheduler = []
@@ -240,7 +240,7 @@ class QubexCircuit(BaseCircuit):
                 virtual_index = qc.find_bit(instruction.clbits[0]).index
                 physical_index = qc.find_bit(instruction.qubits[0]).index
                 classical_bit_mapping[virtual_index] = physical_index
-                logger.info(
+                logger.debug(
                     f"virtual qubit: {virtual_index} -> physical index: {physical_index} -> physical label: {self._backend.physical_label(physical_index)}"
                 )
             elif name == "delay":
