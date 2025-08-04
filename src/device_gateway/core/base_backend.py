@@ -84,6 +84,13 @@ class BaseBackend(metaclass=ABCMeta):
         Returns the device topology, e.g., {"qubits": [{"id": 0, "physical_id": 5}], "couplings": [{"control": 0, "target": 1}]}
         """
         return self.load_device_topology()
+    
+    @property
+    def physical_ids(self) -> list:
+        """
+        Returns a list of physical IDs of the qubits, e.g., [5, 7]
+        """
+        return [qubit["physical_id"] for qubit in self.device_topology["qubits"]]
 
     @property
     def device_status(self) -> dict:
