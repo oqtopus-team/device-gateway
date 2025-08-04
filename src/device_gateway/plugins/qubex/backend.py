@@ -22,7 +22,7 @@ class QubexBackend(BaseBackend):
         self._execute_readout_calibration = True
         self._experiment = Experiment(
             chip_id=os.getenv("CHIP_ID", "64Q"),
-            qubits=self.qubits,
+            qubits=self.physical_ids,
             config_dir=os.getenv("CONFIG_DIR", "/app/qubex_config"),
             params_dir=os.getenv("PARAMS_DIR", "/app/qubex_config"),
             calib_note_path=os.getenv(
@@ -30,8 +30,26 @@ class QubexBackend(BaseBackend):
             ),
         )
         logger.info(f"Qubex version: {get_package_version('qubex')}")
-        self._experiment.linkup()
-        logger.info("Qubex experiment linked up successfully")
+
+    @property
+    def physical_map(self):
+        """
+        Returns the physical index to physical label mapping.
+        The mapping is in the format physical_map: {'qubits': {0: 'Q29', 1: 'Q30', 2: 'Q31'}, 'couplings': {(2, 0): ('Q31', 'Q29'), (2, 1): ('Q31', 'Q30')}}"}
+        """
+        device_topology = self.load_device_topology()
+        qubits = {
+            qubit["id"]: f"{self._experiment.get_qubit_label(int(qubit["physical_id"]))}"
+            for qubit in device_topology["qubits"]
+        }
+        couplings = {
+            (c["control"], c["target"]): (
+                qubits[c["control"]],
+                qubits[c["target"]],
+            )
+            for c in device_topology["couplings"]
+        }
+        return {"qubits": qubits, "couplings": couplings}
 
     def _search_qubit_by_id(self, id):
         for qubit in self.device_topology.get("qubits", []):
@@ -98,6 +116,7 @@ class QubexBackend(BaseBackend):
             mode="single",
             shots=shots,
             interval=DEFAULT_INTERVAL,
+            reset_awg_and_capunits = False,
         ).get_counts(targets=self.classical_registers)
 
     def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
@@ -105,6 +124,8 @@ class QubexBackend(BaseBackend):
         The compiled_circuit is produced by the PulseSchedule class.
         """
         if self.is_active() and self._execute_readout_calibration:
+            self._experiment.connect()
+            logger.info("Qubex experiment connect successfully")
             logger.info("Performing readout calibration")
             self._readout_calibration()
             self._execute_readout_calibration = False
