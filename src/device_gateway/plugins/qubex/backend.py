@@ -116,7 +116,7 @@ class QubexBackend(BaseBackend):
             mode="single",
             shots=shots,
             interval=DEFAULT_INTERVAL,
-            reset_awg_and_capunits = False,
+            reset_awg_and_capunits = True,
         ).get_counts(targets=self.classical_registers)
 
     def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
