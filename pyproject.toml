@@ -35,9 +35,7 @@ dev = [
     "python-json-logger>=2.0.7",
     "pytest-mock>=3.14.0",
 ]
-qubex = [
-    "qubex[backend]",
-]
+qubex = []
 
 [build-system]
 requires = ["hatchling"]
