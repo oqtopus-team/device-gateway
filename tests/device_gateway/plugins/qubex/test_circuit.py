@@ -1,7 +1,6 @@
 """Basic unit tests for QubexCircuit using AAA pattern."""
 
 import pytest
-from qiskit import QuantumCircuit
 from qubex.pulse import PulseSchedule
 
 from device_gateway.plugins.qubex.backend import QubexBackend
@@ -101,19 +100,14 @@ class TestQubexCircuit:
         with pytest.raises(ValueError, match="Invalid qubit: Q04"):
             circuit.delay("Q04", 100.0)
 
-    def test_compile_simple_circuit(self, sample_qubex_config):
-        """Test compiling a simple quantum circuit."""
+    def test_compile_bell_circuit(self, sample_qubex_config, bell_circuit):
+        """Test compiling a Bell state circuit."""
         # Arrange
         backend = QubexBackend(sample_qubex_config)
         circuit = QubexCircuit(backend)
 
-        qc = QuantumCircuit(2, 2)
-        qc.x(0)
-        qc.cx(0, 1)
-        qc.measure_all()
-
         # Act
-        result = circuit.compile(qc)
+        result = circuit.compile(bell_circuit)
 
         # Assert
         assert isinstance(result, PulseSchedule)

@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 import pytest
+from qiskit import QuantumCircuit
 
 
 @pytest.fixture(scope="session")
@@ -68,3 +69,15 @@ def sample_qubex_config(qubex_fixtures_dir):
         "device_topology_json_path": str(qubex_fixtures_dir / "device_topology.json"),
         "n_shots": 1000,
     }
+
+
+@pytest.fixture(scope="session")
+def bell_circuit():
+    """Create a Bell state circuit (|00⟩ + |11⟩)/√2 using RZ and SX gates."""
+    qc = QuantumCircuit(2, 2)
+    qc.rz(3.14159 / 2, 0)  # π/2 rotation around Z
+    qc.sx(0)  # √X gate to create superposition
+    qc.rz(-3.14159 / 2, 0)  # -π/2 rotation around Z (equivalent to H gate)
+    qc.cx(0, 1)  # Entangle qubits 0 and 1
+    qc.measure_all()  # Measure both qubits
+    return qc
