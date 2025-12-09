@@ -187,3 +187,5 @@ docs/example/qubex_backend_debug.ipynb
 docs/example/qubex_backend_debug_pulse.ipynb
 docs/example/qubex_backend_debug_pulse_v2.ipynb
 docs/example/qubex_backend_debug_pulse_cloud.ipynb
+tmp/**/*
+!tests/fixtures/**/*

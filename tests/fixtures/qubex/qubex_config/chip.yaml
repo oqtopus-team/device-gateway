@@ -1,0 +1,3 @@
+TEST_CHIP:
+  name: "test chip"
+  n_qubits: 64

@@ -1,0 +1,5 @@
+TEST_CHIP:
+  - mux: 0
+    ctrl: [Q01A-2, Q01A-4, Q01A-9, Q01A-11]
+    read_out: Q01A-1
+    read_in: Q01A-0

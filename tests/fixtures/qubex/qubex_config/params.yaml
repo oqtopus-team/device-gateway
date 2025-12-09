@@ -1,0 +1,33 @@
+TEST_CHIP:
+  control_amplitude:
+    # MUX00
+    Q00: 0.217811
+    Q01: 0.050244
+    Q02: 0.020754
+    Q03: 0.208409
+
+  readout_amplitude:
+    # MUX00
+    Q00: 0.02
+    Q01: 0.02
+    Q02: 0.02
+    Q03: 0.015
+
+  control_vatt:
+    # MUX00
+    Q00: 3072
+    Q01: 3072
+    Q02: 3072
+    Q03: 3072
+
+  readout_vatt:
+    # MUX
+    0: 2048
+
+  capture_delay:
+    # MUX
+    0: 7
+
+  pump_frequency:
+    # MUX
+    0: 10.25
