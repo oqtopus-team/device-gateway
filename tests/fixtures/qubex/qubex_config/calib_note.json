@@ -1,67 +1,296 @@
 {
-    "calibration_data": {
-        "Q29": {
-            "readout_fidelity": 0.99,
-            "gate_fidelity": 0.995,
-            "T1": 50.0,
-            "T2": 30.0,
-            "frequency": 5000000000,
-            "pi_pulse": {
-                "amplitude": 0.5,
-                "duration": 20,
-                "phase": 0
-            },
-            "pi_half_pulse": {
-                "amplitude": 0.25,
-                "duration": 20,
-                "phase": 0
-            }
-        },
-        "Q30": {
-            "readout_fidelity": 0.985,
-            "gate_fidelity": 0.990,
-            "T1": 45.0,
-            "T2": 25.0,
-            "frequency": 5100000000,
-            "pi_pulse": {
-                "amplitude": 0.52,
-                "duration": 21,
-                "phase": 0
-            },
-            "pi_half_pulse": {
-                "amplitude": 0.26,
-                "duration": 21,
-                "phase": 0
-            }
-        },
-        "Q31": {
-            "readout_fidelity": 0.992,
-            "gate_fidelity": 0.988,
-            "T1": 48.0,
-            "T2": 28.0,
-            "frequency": 5200000000,
-            "pi_pulse": {
-                "amplitude": 0.48,
-                "duration": 19,
-                "phase": 0
-            },
-            "pi_half_pulse": {
-                "amplitude": 0.24,
-                "duration": 19,
-                "phase": 0
-            }
-        }
+  "cr_params": {
+    "Q00-Q01": {
+      "cancel_amplitude": 0.007838519350312347,
+      "cancel_beta": 0.0,
+      "cancel_phase": -3.140356448839197,
+      "cr_amplitude": 0.9999999999999999,
+      "cr_beta": 0.0,
+      "cr_phase": 1.238014175471772,
+      "duration": 0.0,
+      "ramptime": 16.0,
+      "rotary_amplitude": 0.0,
+      "target": "Q00-Q01",
+      "timestamp": "2025-12-08 23:58:51",
+      "zx_rotation_rate": 3.3241780458668005e-05
     },
-    "coupling_data": {
-        "Q29-Q30": {
-            "cx_fidelity": 0.975,
-            "cx_duration": 40
-        },
-        "Q30-Q31": {
-            "cx_fidelity": 0.980,
-            "cx_duration": 38
-        }
+    "Q00-Q02": {
+      "cancel_amplitude": 0.007838519350312347,
+      "cancel_beta": 0.0,
+      "cancel_phase": -3.140356448839197,
+      "cr_amplitude": 0.9999999999999999,
+      "cr_beta": 0.0,
+      "cr_phase": 1.238014175471772,
+      "duration": 0.0,
+      "ramptime": 16.0,
+      "rotary_amplitude": 0.0,
+      "target": "Q00-Q02",
+      "timestamp": "2025-12-08 23:58:51",
+      "zx_rotation_rate": 3.3241780458668005e-05
     },
-    "calibrated_at": "2025-12-09T10:00:00.000Z",
-    "version": "1.0.0"
+    "Q03-Q01": {
+      "cancel_amplitude": 0.007838519350312347,
+      "cancel_beta": 0.0,
+      "cancel_phase": -3.140356448839197,
+      "cr_amplitude": 0.9999999999999999,
+      "cr_beta": 0.0,
+      "cr_phase": 1.238014175471772,
+      "duration": 0.0,
+      "ramptime": 16.0,
+      "rotary_amplitude": 0.0,
+      "target": "Q03-Q01",
+      "timestamp": "2025-12-08 23:58:51",
+      "zx_rotation_rate": 3.3241780458668005e-05
+    },
+    "Q03-Q02": {
+      "cancel_amplitude": 0.007838519350312347,
+      "cancel_beta": 0.0,
+      "cancel_phase": -3.140356448839197,
+      "cr_amplitude": 0.9999999999999999,
+      "cr_beta": 0.0,
+      "cr_phase": 1.238014175471772,
+      "duration": 0.0,
+      "ramptime": 16.0,
+      "rotary_amplitude": 0.0,
+      "target": "Q03-Q02",
+      "timestamp": "2025-12-08 23:58:51",
+      "zx_rotation_rate": 3.3241780458668005e-05
+    }
+  },
+  "drag_hpi_params": {
+    "Q00": {
+      "amplitude": 0.41220128490682156,
+      "beta": 0.5870342330882663,
+      "duration": 16,
+      "target": "Q00",
+      "timestamp": "2025-12-08 22:56:58"
+    },
+    "Q01": {
+      "amplitude": 0.32244878753816053,
+      "beta": 1.63726700354209,
+      "duration": 16,
+      "target": "Q01",
+      "timestamp": "2025-12-08 23:12:57"
+    },
+    "Q02": {
+      "amplitude": 0.32244878753816053,
+      "beta": 1.63726700354209,
+      "duration": 16,
+      "target": "Q02",
+      "timestamp": "2025-12-08 23:12:57"
+    },
+    "Q03": {
+      "amplitude": 0.28845463160981744,
+      "beta": 0.5738646537750244,
+      "duration": 16,
+      "target": "Q03",
+      "timestamp": "2025-12-08 23:21:24"
+    }
+  },
+  "drag_pi_params": {
+    "Q00": {
+      "amplitude": 0.5520610446587713,
+      "beta": 0.43045114903579357,
+      "duration": 24,
+      "target": "Q00",
+      "timestamp": "2025-12-08 22:57:45"
+    },
+    "Q01": {
+      "amplitude": 0.5520610446587713,
+      "beta": 0.43045114903579357,
+      "duration": 24,
+      "target": "Q01",
+      "timestamp": "2025-12-08 22:57:45"
+    },
+    "Q02": {
+      "amplitude": 0.4320519577652555,
+      "beta": 1.4002385181588,
+      "duration": 24,
+      "target": "Q02",
+      "timestamp": "2025-12-08 23:13:48"
+    },
+    "Q03": {
+      "amplitude": 0.3855210043305716,
+      "beta": 0.5220864504892403,
+      "duration": 24,
+      "target": "Q03",
+      "timestamp": "2025-12-08 23:22:13"
+    }
+  },
+  "hpi_params": {
+    "Q00": {
+      "amplitude": 0.17645671547156744,
+      "duration": 32.0,
+      "target": "Q00",
+      "tau": 12,
+      "timestamp": "2025-12-08 22:54:55"
+    },
+    "Q01": {
+      "amplitude": 0.17645671547156744,
+      "duration": 32.0,
+      "target": "Q01",
+      "tau": 12,
+      "timestamp": "2025-12-08 22:54:55"
+    },
+    "Q02": {
+      "amplitude": 0.13820657062367184,
+      "duration": 32.0,
+      "target": "Q02",
+      "tau": 12,
+      "timestamp": "2025-12-08 23:10:45"
+    },
+    "Q03": {
+      "amplitude": 0.12326477954990944,
+      "duration": 32.0,
+      "target": "Q03",
+      "tau": 12,
+      "timestamp": "2025-12-08 23:19:24"
+    }
+  },
+  "pi_params": {
+    "Q00": {
+      "amplitude": 0.3508032418738616,
+      "duration": 32.0,
+      "target": "Q00",
+      "tau": 12,
+      "timestamp": "2025-12-08 22:55:14"
+    },
+    "Q01": {
+      "amplitude": 0.3508032418738616,
+      "duration": 32.0,
+      "target": "Q01",
+      "tau": 12,
+      "timestamp": "2025-12-08 22:55:14"
+    },
+    "Q02": {
+      "amplitude": 0.2772704338010237,
+      "duration": 32.0,
+      "target": "Q02",
+      "tau": 12,
+      "timestamp": "2025-12-08 23:11:05"
+    },
+    "Q03": {
+      "amplitude": 0.24771418596723607,
+      "duration": 32.0,
+      "target": "Q03",
+      "tau": 12,
+      "timestamp": "2025-12-08 23:19:42"
+    }
+  },
+  "rabi_params": {
+    "Q00": {
+      "amplitude": 3.494092005102763,
+      "angle": -1.1412100036952157,
+      "distance": -0.10308706015348434,
+      "frequency": 0.012538626043109721,
+      "noise": 0.027303004637360573,
+      "offset": 0.7675379530233043,
+      "phase": -0.027615908757193396,
+      "r2": 0.9780029118834616,
+      "reference_phase": 0.45597438474906443,
+      "target": "Q00",
+      "timestamp": "2025-12-08 22:54:44"
+    },
+    "Q01": {
+      "amplitude": null,
+      "angle": null,
+      "distance": null,
+      "frequency": null,
+      "noise": null,
+      "offset": null,
+      "phase": null,
+      "r2": null,
+      "reference_phase": null,
+      "target": "Q01",
+      "timestamp": "2025-12-08 23:03:14"
+    },
+    "Q02": {
+      "amplitude": 4.122437032890585,
+      "angle": 1.5396242635932307,
+      "distance": 0.5242128372192383,
+      "frequency": 0.01280405614359431,
+      "noise": 0.03449545428156853,
+      "offset": 0.17411946408824153,
+      "phase": 0.006388752793214994,
+      "r2": 0.9983989970421547,
+      "reference_phase": 2.9923305301478056,
+      "target": "Q02",
+      "timestamp": "2025-12-08 23:10:33"
+    },
+    "Q03": {
+      "amplitude": 3.530141088828797,
+      "angle": -0.8044249256465097,
+      "distance": 0.1704017072916031,
+      "frequency": 0.012659078642233205,
+      "noise": 0.03154893219470978,
+      "offset": 0.33124973354439874,
+      "phase": 0.00742911161819066,
+      "r2": 0.9967430025642274,
+      "reference_phase": 0.719676910400197,
+      "target": "Q03",
+      "timestamp": "2025-12-08 23:19:13"
+    }
+  },
+  "state_params": {
+    "Q00": {
+      "centers": {
+        "0": [
+          4.05994746737067,
+          1.8932537749581402
+        ],
+        "1": [
+          -3.749701314764397,
+          -1.5807326319085893
+        ]
+      },
+      "reference_phase": 0.4379920219905735,
+      "target": "Q00",
+      "timestamp": "2025-12-08 22:57:59"
+    },
+    "Q01": {
+      "centers": {
+        "0": [
+          4.05994746737067,
+          1.8932537749581402
+        ],
+        "1": [
+          -3.749701314764397,
+          -1.5807326319085893
+        ]
+      },
+      "reference_phase": 0.4379920219905735,
+      "target": "Q01",
+      "timestamp": "2025-12-08 22:57:59"
+    },
+    "Q02": {
+      "centers": {
+        "0": [
+          -4.371169879623821,
+          0.6643288423975918
+        ],
+        "1": [
+          4.571324805314298,
+          0.37814243859910107
+        ]
+      },
+      "reference_phase": 2.9993536206054463,
+      "target": "Q02",
+      "timestamp": "2025-12-08 23:14:04"
+    },
+    "Q03": {
+      "centers": {
+        "0": [
+          2.80699132876655,
+          2.4215178288533514
+        ],
+        "1": [
+          -2.5224481684982183,
+          -2.5979309528474106
+        ]
+      },
+      "reference_phase": 0.7138702795378384,
+      "target": "Q03",
+      "timestamp": "2025-12-08 23:22:27"
+    }
+  }
 }

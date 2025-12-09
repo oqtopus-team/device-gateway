@@ -3,7 +3,3 @@ TEST_CHIP:
     ctrl: [Q01A-2, Q01A-4, Q01A-9, Q01A-11]
     read_out: Q01A-1
     read_in: Q01A-0
-  - mux: 1
-    ctrl: [Q02A-2, Q02A-4, Q02A-9, Q02A-11]
-    read_out: Q02A-1
-    read_in: Q02A-0
