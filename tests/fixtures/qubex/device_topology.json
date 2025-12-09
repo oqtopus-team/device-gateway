@@ -4,7 +4,7 @@
   "qubits": [
     {
       "id": 0,
-      "physical_id": "Q00",
+      "physical_id": 0,
       "meas_error": {
         "prob_meas1_prep0": 0.01,
         "prob_meas0_prep1": 0.02
@@ -12,7 +12,7 @@
     },
     {
       "id": 1,
-      "physical_id": "Q01",
+      "physical_id": 1,
       "meas_error": {
         "prob_meas1_prep0": 0.015,
         "prob_meas0_prep1": 0.025
@@ -20,7 +20,7 @@
     },
     {
       "id": 2,
-      "physical_id": "Q02",
+      "physical_id": 2,
       "meas_error": {
         "prob_meas1_prep0": 0.012,
         "prob_meas0_prep1": 0.018
@@ -28,7 +28,7 @@
     },
     {
       "id": 3,
-      "physical_id": "Q03",
+      "physical_id": 3,
       "meas_error": {
         "prob_meas1_prep0": 0.012,
         "prob_meas0_prep1": 0.018

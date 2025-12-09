@@ -30,3 +30,20 @@ class TestQubexBackend:
         # Assert
         assert isinstance(circuit, QubexCircuit)
         assert circuit._backend is backend
+
+    def test_physical_map_returns_correct_mapping(self, mocker, sample_qubex_config):
+        """Test physical_map property returns correct mapping."""
+        # Arrange
+        backend = QubexBackend(sample_qubex_config)
+
+        expected_map = {
+            "qubits": {0: "Q00", 1: "Q01", 2: "Q02", 3: "Q03"},
+            "couplings": {
+                (0, 1): ("Q00", "Q01"),
+                (0, 2): ("Q00", "Q02"),
+                (3, 1): ("Q03", "Q01"),
+                (3, 2): ("Q03", "Q02"),
+            },
+        }
+        # Act & Assert
+        assert backend.physical_map == expected_map
