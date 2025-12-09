@@ -1,0 +1,10 @@
+Q01A:
+  name: "QuEL-1 test-01"
+  type: "quel1-a"
+  address: "127.0.0.1"  # Test dummy IP
+  adapter: "127.0.0.2"  # Test dummy IP
+Q02A:
+  name: "QuEL-1 test-02"
+  type: "quel1-a"
+  address: "127.0.0.3"  # Test dummy IP
+  adapter: "127.0.0.4"  # Test dummy IP

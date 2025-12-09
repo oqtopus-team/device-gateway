@@ -1,0 +1,67 @@
+{
+    "calibration_data": {
+        "Q29": {
+            "readout_fidelity": 0.99,
+            "gate_fidelity": 0.995,
+            "T1": 50.0,
+            "T2": 30.0,
+            "frequency": 5000000000,
+            "pi_pulse": {
+                "amplitude": 0.5,
+                "duration": 20,
+                "phase": 0
+            },
+            "pi_half_pulse": {
+                "amplitude": 0.25,
+                "duration": 20,
+                "phase": 0
+            }
+        },
+        "Q30": {
+            "readout_fidelity": 0.985,
+            "gate_fidelity": 0.990,
+            "T1": 45.0,
+            "T2": 25.0,
+            "frequency": 5100000000,
+            "pi_pulse": {
+                "amplitude": 0.52,
+                "duration": 21,
+                "phase": 0
+            },
+            "pi_half_pulse": {
+                "amplitude": 0.26,
+                "duration": 21,
+                "phase": 0
+            }
+        },
+        "Q31": {
+            "readout_fidelity": 0.992,
+            "gate_fidelity": 0.988,
+            "T1": 48.0,
+            "T2": 28.0,
+            "frequency": 5200000000,
+            "pi_pulse": {
+                "amplitude": 0.48,
+                "duration": 19,
+                "phase": 0
+            },
+            "pi_half_pulse": {
+                "amplitude": 0.24,
+                "duration": 19,
+                "phase": 0
+            }
+        }
+    },
+    "coupling_data": {
+        "Q29-Q30": {
+            "cx_fidelity": 0.975,
+            "cx_duration": 40
+        },
+        "Q30-Q31": {
+            "cx_fidelity": 0.980,
+            "cx_duration": 38
+        }
+    },
+    "calibrated_at": "2025-12-09T10:00:00.000Z",
+    "version": "1.0.0"
+}
