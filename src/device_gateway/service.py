@@ -16,6 +16,7 @@ from device_gateway.core.plugin_manager import (
     BackendPluginManager,
 )
 from device_gateway.gen.qpu.v1 import qpu_pb2, qpu_pb2_grpc
+from device_gateway.security.attestation import create_job_attestation
 
 logger = logging.getLogger("device_gateway")
 
@@ -126,6 +127,10 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
 
             logger.info(f"program={request.program}, shots={request.shots}")
             counts, message = self.backend.execute(request.program, shots=request.shots)
+            attestation = create_job_attestation(
+                job_id, request.program, counts, self.backend.device_info.get("device_id", "unknown")
+            )
+            logger.info(f"job_attestation={attestation}")
             result = qpu_pb2.Result(counts=counts, message=message)  # type: ignore[attr-defined]
             response = qpu_pb2.CallJobResponse(  # type: ignore[attr-defined]
                 status=qpu_pb2.JobStatus.JOB_STATUS_SUCCESS,  # type: ignore[attr-defined]
