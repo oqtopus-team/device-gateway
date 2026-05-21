@@ -35,6 +35,7 @@ class JobBaggageSpanProcessor(SpanProcessor):
     def on_start(  # noqa: PLR6301
         self, span: Span, parent_context: Context | None = None
     ) -> None:
+        """Mirror ``oqtopus.*`` baggage entries onto the starting span."""
         ctx = parent_context if parent_context is not None else context.get_current()
         for key, value in baggage.get_all(ctx).items():
             if key.startswith(_BAGGAGE_PREFIX) and value is not None:
