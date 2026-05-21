@@ -10,14 +10,17 @@ from pathlib import Path
 import grpc
 import yaml  # type: ignore[import]
 from grpc_reflection.v1alpha import reflection
+from opentelemetry import trace
 
 from device_gateway.core.plugin_manager import (
     SUPPORTED_BACKENDS,
     BackendPluginManager,
 )
 from device_gateway.gen.qpu.v1 import qpu_pb2, qpu_pb2_grpc
+from device_gateway.observability import setup_observability
 
 logger = logging.getLogger("device_gateway")
+tracer = trace.get_tracer(__name__)
 
 
 # Constants
@@ -116,35 +119,52 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         job_id = request.job_id
         logger.info(f"CallJob is started. job_id={job_id}")
 
-        try:
-            if self.backend.is_inactive():
-                logger.error(
-                    f"CallJob. job_id={job_id}, device is inactive. "
-                    "Please check the device status."
+        with tracer.start_as_current_span(
+            "device_gateway.call_job",
+            attributes={
+                "device_gateway.job_id": job_id,
+                "device_gateway.shots": request.shots,
+                "device_gateway.backend": self.backend_name,
+                "device_gateway.is_simulator": self.backend.is_simulator(),
+            },
+        ) as span:
+            try:
+                if self.backend.is_inactive():
+                    logger.error(
+                        f"CallJob. job_id={job_id}, device is inactive. "
+                        "Please check the device status."
+                    )
+                    span.set_attribute("device_gateway.call_job.status", "device_inactive")
+                    return self._create_error_response(ERROR_DEVICE_INACTIVE)
+
+                logger.info(f"program={request.program}, shots={request.shots}")
+                counts, message = self.backend.execute(
+                    request.program, shots=request.shots
                 )
-                return self._create_error_response(ERROR_DEVICE_INACTIVE)
+                result = qpu_pb2.Result(counts=counts, message=message)  # type: ignore[attr-defined]
+                response = qpu_pb2.CallJobResponse(  # type: ignore[attr-defined]
+                    status=qpu_pb2.JobStatus.JOB_STATUS_SUCCESS,  # type: ignore[attr-defined]
+                    result=result,
+                )
+                span.set_attribute("device_gateway.call_job.status", "success")
+                span.set_attribute(
+                    "device_gateway.result.num_outcomes", len(counts or {})
+                )
 
-            logger.info(f"program={request.program}, shots={request.shots}")
-            counts, message = self.backend.execute(request.program, shots=request.shots)
-            result = qpu_pb2.Result(counts=counts, message=message)  # type: ignore[attr-defined]
-            response = qpu_pb2.CallJobResponse(  # type: ignore[attr-defined]
-                status=qpu_pb2.JobStatus.JOB_STATUS_SUCCESS,  # type: ignore[attr-defined]
-                result=result,
-            )
+            except Exception:
+                logger.error(
+                    f"CallJob. job_id={job_id}, Exception occurred.",
+                    exc_info=True,
+                )
+                response = self._create_error_response(ERROR_INTERNAL_SERVER)
+                span.set_attribute("device_gateway.call_job.status", "failure")
 
-        except Exception:
-            logger.error(
-                f"CallJob. job_id={job_id}, Exception occurred.",
-                exc_info=True,
-            )
-            response = self._create_error_response(ERROR_INTERNAL_SERVER)
-
-        finally:
-            elapsed_time = time.time() - start_time
-            logger.info(
-                f"CallJob is finished. elapsed_time_sec={elapsed_time:.3f}, job_id={job_id}, status={response.status}"
-            )
-            return response
+            finally:
+                elapsed_time = time.time() - start_time
+                logger.info(
+                    f"CallJob is finished. elapsed_time_sec={elapsed_time:.3f}, job_id={job_id}, status={response.status}"
+                )
+                return response
 
     def _get_service_status(self) -> qpu_pb2.ServiceStatus:
         """Get current service status.
@@ -255,6 +275,8 @@ def serve(config_yaml_path: str, logging_yaml_path: str):
     with Path(logging_yaml_path).open("r", encoding="utf-8") as file:
         logging_yaml = assign_environ(yaml.safe_load(file))
         logging.config.dictConfig(logging_yaml)
+
+    setup_observability()
 
     max_workers = config_yaml["proto"].get("max_workers", 10)
     address = config_yaml["proto"].get("address", "[::]:50051")

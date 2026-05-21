@@ -3,9 +3,11 @@ import logging
 from abc import ABCMeta, abstractmethod
 from typing import Any
 
+from opentelemetry import trace
 from qiskit.qasm3 import loads
 
 logger = logging.getLogger("device_gateway")
+tracer = trace.get_tracer(__name__)
 
 # Constants
 SUCCESS_MESSAGE = "job is succeeded"
@@ -225,11 +227,23 @@ class BaseBackend(metaclass=ABCMeta):
             The counts are in the format {"000": 512, "111": 512}.
 
         """
-        qc = loads(program)
-        circuit = self._get_circuit()
-        compiled_circuit = circuit.compile(qc)
-        counts = self._execute(compiled_circuit, shots=shots)
-        counts = self._remove_zero_values(counts)
+        with tracer.start_as_current_span("device_gateway.execute.qasm_parse") as span:
+            qc = loads(program)
+            span.set_attribute("device_gateway.circuit.num_qubits", qc.num_qubits)
+            span.set_attribute("device_gateway.circuit.num_clbits", qc.num_clbits)
+            span.set_attribute("device_gateway.circuit.depth", qc.depth())
+
+        with tracer.start_as_current_span("device_gateway.execute.compile"):
+            circuit = self._get_circuit()
+            compiled_circuit = circuit.compile(qc)
+
+        with tracer.start_as_current_span("device_gateway.execute.run") as span:
+            span.set_attribute("device_gateway.shots", shots)
+            counts = self._execute(compiled_circuit, shots=shots)
+
+        with tracer.start_as_current_span("device_gateway.execute.post_process") as span:
+            counts = self._remove_zero_values(counts)
+            span.set_attribute("device_gateway.result.num_outcomes", len(counts))
         logger.info(f"counts={counts}")
 
         return counts, SUCCESS_MESSAGE
