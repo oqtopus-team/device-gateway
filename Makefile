@@ -6,7 +6,7 @@ PROTO_URL := https://raw.githubusercontent.com/oqtopus-team/oqtopus-engine/main/
 SPEC_DIR := spec
 PROTO_FILE := $(SPEC_DIR)/qpu.proto
 
-.PHONY: proto-download proto-generate, generate-config, generate-deveice-topology, download-qubex-config, job, run, test, docs
+.PHONY: proto-download proto-generate, generate-config, generate-deveice-topology, generate-device-topology-from-qubex, download-qubex-config, job, run, test, docs
 
 proto-download: ## Download proto file from oqtopus-engine
 	@echo "Downloading proto file..."
@@ -34,6 +34,10 @@ generate-config: ## Generate config
 generate-device-topology: ## Generate device topology
 	@echo "Generating device topology..."
 	@bash scripts/device_topology_generator.sh
+
+generate-device-topology-from-qubex: ## Generate device topology from local Qubex calibration files
+	@echo "Generating device topology from local Qubex files..."
+	@bash scripts/device_topology_generator_from_qubex.sh
 
 download-qubex-config: ## Download qubex config
 	@echo "Downloading qubex config..."
