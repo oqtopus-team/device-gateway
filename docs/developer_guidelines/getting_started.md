@@ -82,7 +82,8 @@ uv run src/device_gateway/tool/device_info_generator.py -c config/config.yaml
 
 ## Qubex Integration
 
-if you use QDash, please download the Qubex config file and generate the device topology.
+If you use QDash, you can download the Qubex config file and generate the
+device topology via the QDash API.
 
 ### Download Qubex Config
 
@@ -95,6 +96,26 @@ make download-qubex-config
 ```bash
 make generate-device-topology
 ```
+
+You can also generate the same device topology JSON locally from Qubex
+calibration files without calling the QDash API. The local generator reads
+`device_topology_request.json` like the QDash API path, reads
+`calibration/calib_note.json`, uses metric YAML files from `params/` when
+available, and uses the example topology YAML files under
+`config/example/topologies/`.
+
+```bash
+QUBEX_CHIP_ID=64Qv3 make generate-device-topology-from-qubex
+```
+
+The default paths are:
+
+- `CALIB_NOTE_PATH=qubex-config/${QUBEX_CHIP_ID}/calibration/calib_note.json`
+- `PARAMS_DIR=qubex-config/${QUBEX_CHIP_ID}/params`
+- `DEVICE_TOPOLOGY_REQUEST_JSON_PATH=config/device_topology_request.json`
+- `TOPOLOGY_YAML=config/example/topologies/square-lattice-mux-${inferred_chip_size}.yaml`
+- `DEVICE_TOPOLOGY_JSON_PATH=config/device_topology.json`
+- `DEVICE_TOPOLOGY_PNG_PATH=config/device_topology.png`
 
 ### Running the server in a container
 

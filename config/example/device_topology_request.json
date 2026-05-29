@@ -9,5 +9,25 @@
   "exclude_couplings": [
     "0-1",
     "3-1"
-  ]
+  ],
+  "condition": {
+    "coupling_fidelity": {
+      "min": 0.0,
+      "max": 1.0,
+      "is_within_24h": true,
+      "metric": "zx90_gate_fidelity"
+    },
+    "qubit_fidelity": {
+      "min": 0.0,
+      "max": 1.0,
+      "is_within_24h": true,
+      "metric": "x90_gate_fidelity"
+    },
+    "readout_fidelity": {
+      "min": 0.0,
+      "max": 1.0,
+      "is_within_24h": true
+    },
+    "only_maximum_connected": true
+  }
 }
