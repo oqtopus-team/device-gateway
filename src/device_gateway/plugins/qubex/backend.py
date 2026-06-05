@@ -5,9 +5,9 @@ import numpy as np
 from qiskit.qasm3 import loads
 from qiskit.result import Counts, LocalReadoutMitigator, ProbDistribution
 from qubex.experiment import Experiment
-from qubex.measurement.measurement import DEFAULT_INTERVAL, DEFAULT_SHOTS
+from qubex.measurement.measurement_defaults import DEFAULT_INTERVAL, DEFAULT_SHOTS
 from qubex.pulse import PulseSchedule
-from qubex.version import get_package_version
+from qubex.version import get_version
 
 from device_gateway.core.base_backend import SUCCESS_MESSAGE, BaseBackend
 from device_gateway.plugins.qubex.circuit import QubexCircuit
@@ -18,18 +18,20 @@ logger = logging.getLogger("device_gateway")
 class QubexBackend(BaseBackend):
     def __init__(self, config: dict):
         super().__init__(config)
-        logger.info(f"Qubex version: {get_package_version('qubex')}")
+        logger.info(f"Qubex version: {get_version()}")
+        chip_id = os.getenv("CHIP_ID", "64Q")
         self._execute_readout_calibration = True
         self._experiment = Experiment(
-            chip_id=os.getenv("CHIP_ID", "64Q"),
+            chip_id=chip_id,
             qubits=self.physical_ids,
-            config_dir=os.getenv("CONFIG_DIR", "/app/qubex_config"),
-            params_dir=os.getenv("PARAMS_DIR", "/app/qubex_config"),
+            config_dir=os.getenv("CONFIG_DIR", f"/app/qubex-config/{chip_id}/config"),
+            params_dir=os.getenv("PARAMS_DIR", f"/app/qubex-config/{chip_id}/params"),
             calib_note_path=os.getenv(
-                "CALIB_NOTE_PATH", "/app/qubex_config/calib_note.json"
+                "CALIB_NOTE_PATH",
+                f"/app/qubex-config/{chip_id}/calibration/calib_note.json",
             ),
         )
-        logger.info(f"Qubex version: {get_package_version('qubex')}")
+        logger.info(f"Qubex version: {get_version()}")
 
     @property
     def physical_map(self):
@@ -39,7 +41,9 @@ class QubexBackend(BaseBackend):
         """
         device_topology = self.load_device_topology()
         qubits = {
-            qubit["id"]: f"{self._experiment.get_qubit_label(int(qubit["physical_id"]))}"
+            qubit[
+                "id"
+            ]: f"{self._experiment.get_qubit_label(int(qubit['physical_id']))}"
             for qubit in device_topology["qubits"]
         }
         couplings = {
@@ -67,8 +71,8 @@ class QubexBackend(BaseBackend):
             logger.info(f"Building classifier for qubit {qubit}")
             res = self._experiment.build_classifier(targets=qubit, plot=False)
             note[qubit] = {
-                "p0m1": 1 - res["readout_fidelties"][qubit][0],
-                "p1m0": 1 - res["readout_fidelties"][qubit][1],
+                "p0m1": 1 - res["readout_fidelities"][qubit][0],
+                "p1m0": 1 - res["readout_fidelities"][qubit][1],
             }
         return note
 
@@ -116,7 +120,7 @@ class QubexBackend(BaseBackend):
             mode="single",
             shots=shots,
             interval=DEFAULT_INTERVAL,
-            reset_awg_and_capunits = True,
+            reset_awg_and_capunits=True,
         ).get_counts(targets=self.classical_registers)
 
     def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
