@@ -174,7 +174,7 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
-qubex_config/
+qubex-config/
 .classifier/
 
 config/device_topology.json
