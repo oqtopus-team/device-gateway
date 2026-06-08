@@ -3,9 +3,9 @@ proto:
   address: "[::]:51021"
 
 device_info:
-  device_id: "qulacs"
+  # device_id: "qulacs"
   provider_id: "oqtopus"
-  max_qubits: 3
+  # max_qubits: 16
   max_shots: 10000
 
 # Plugin configuration

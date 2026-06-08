@@ -3,9 +3,9 @@ proto:
   address: "[::]:51021"
 
 device_info:
-  device_id: "anemone"
+  # device_id: "anemone"
   provider_id: "qiqb"
-  max_qubits: 7
+  # max_qubits: 16
   max_shots: 10000
 
 # Plugin configuration
