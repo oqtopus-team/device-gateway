@@ -7,9 +7,9 @@ import time
 from concurrent import futures
 from pathlib import Path
 
-import grpc
 import yaml  # type: ignore[import]
 from grpc_reflection.v1alpha import reflection
+from oqtopus_util.grpc import create_server
 
 from device_gateway.core.plugin_manager import (
     SUPPORTED_BACKENDS,
@@ -258,7 +258,10 @@ def serve(config_yaml_path: str, logging_yaml_path: str):
 
     max_workers = config_yaml["proto"].get("max_workers", 10)
     address = config_yaml["proto"].get("address", "[::]:50051")
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
+    server = create_server(
+        futures.ThreadPoolExecutor(max_workers=max_workers),
+        config_yaml.get("grpc") or config_yaml["proto"],
+    )
     qpu_pb2_grpc.add_QpuServiceServicer_to_server(
         ServerImpl(config=config_yaml), server
     )

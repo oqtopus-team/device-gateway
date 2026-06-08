@@ -16,6 +16,7 @@ dependencies = [
     "pyyaml>=6.0.2",
     "grpcio-reflection>=1.62.3",
     "pendulum>=3.1.0",
+    "oqtopus-util>=1.0.2",
     "typing-extensions>=4.14.0"
 ]
 
@@ -56,4 +57,5 @@ addopts = "--cov=src --cov-report=xml"
 pythonpath = ["src","src/device_gateway","src/device_gateway/qpu_interface","src/device_gateway/qpu_interface","src/device_gateway/qpu_interface/v2"]
 
 [tool.uv.sources]
+oqtopus-util = { git = "https://github.com/oqtopus-team/oqtopus-util.git", branch = "feature/grpc-message-size-config" }
 qubex = { git = "https://github.com/amachino/qubex.git", tag = "develop" }

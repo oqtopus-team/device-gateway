@@ -1,6 +1,7 @@
 proto:
   max_workers: 2
   address: "[::]:51021"
+  max_message_length: 67108864
 
 device_info:
   # device_id: "qulacs"
