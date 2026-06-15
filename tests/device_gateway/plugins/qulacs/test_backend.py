@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 
 from device_gateway.plugins.qulacs.backend import QulacsBackend
 
@@ -47,6 +48,151 @@ device_topology = """{
 
 
 class TestQulacsBackend:
+    def test_execute__noise_disabled_is_backward_compatible(self, mocker) -> None:
+        # Arrange
+        mocker.patch(
+            "device_gateway.core.base_backend.BaseBackend.load_device_topology",
+            return_value=json.loads(device_topology),
+        )
+        backend = QulacsBackend({})
+        program = """
+            OPENQASM 3;
+            include "stdgates.inc";
+            bit[1] c;
+            x $0;
+            c[0] = measure $0;
+        """
+
+        # Act
+        counts, message = backend.execute(program, shots=1000)
+
+        # Assert
+        assert isinstance(counts, dict)
+        assert counts == {"1": 1000}
+        assert message == "job is succeeded"
+
+    def test_execute__single_qubit_noise_enabled(self, mocker) -> None:
+        # Arrange
+        mocker.patch(
+            "device_gateway.core.base_backend.BaseBackend.load_device_topology",
+            return_value=json.loads(device_topology),
+        )
+        config = {
+            "plugin": {
+                "name": "qulacs",
+                "noise_model": {
+                    "enabled": True,
+                    "single_qubit_depolarizing": 1.0,
+                    "two_qubit_depolarizing": 0.0,
+                },
+            }
+        }
+        backend = QulacsBackend(config)
+        program = """
+            OPENQASM 3;
+            include "stdgates.inc";
+            bit[1] c;
+            x $0;
+            c[0] = measure $0;
+        """
+
+        # Act
+        counts, message = backend.execute(program, shots=2000)
+
+        # Assert
+        assert isinstance(counts, dict)
+        assert "0" in counts
+        assert "1" in counts
+        assert message == "job is succeeded"
+
+    def test_execute__single_qubit_noise_from_topology_fidelity(self, mocker) -> None:
+        # Arrange
+        topology = deepcopy(json.loads(device_topology))
+        for qubit in topology["qubits"]:
+            qubit["fidelity"] = 1.0
+            qubit["meas_error"] = {
+                "prob_meas1_prep0": 0.0,
+                "prob_meas0_prep1": 0.0,
+            }
+        topology["qubits"][0]["fidelity"] = 0.0
+
+        mocker.patch(
+            "device_gateway.core.base_backend.BaseBackend.load_device_topology",
+            return_value=topology,
+        )
+        config = {
+            "plugin": {
+                "name": "qulacs",
+                "noise_model": {
+                    "enabled": True,
+                    "use_topology_fidelity": True,
+                    "readout_error": False,
+                },
+            }
+        }
+        backend = QulacsBackend(config)
+        program = """
+            OPENQASM 3;
+            include "stdgates.inc";
+            bit[1] c;
+            x $0;
+            c[0] = measure $0;
+        """
+
+        # Act
+        counts, message = backend.execute(program, shots=2000)
+
+        # Assert
+        assert isinstance(counts, dict)
+        assert "0" in counts
+        assert "1" in counts
+        assert message == "job is succeeded"
+
+    def test_execute__readout_error_from_topology(self, mocker) -> None:
+        # Arrange
+        topology = deepcopy(json.loads(device_topology))
+        for qubit in topology["qubits"]:
+            qubit["fidelity"] = 1.0
+            qubit["meas_error"] = {
+                "prob_meas1_prep0": 0.0,
+                "prob_meas0_prep1": 0.0,
+            }
+        topology["qubits"][0]["meas_error"] = {
+            "prob_meas1_prep0": 1.0,
+            "prob_meas0_prep1": 0.0,
+        }
+
+        mocker.patch(
+            "device_gateway.core.base_backend.BaseBackend.load_device_topology",
+            return_value=topology,
+        )
+        config = {
+            "plugin": {
+                "name": "qulacs",
+                "noise_model": {
+                    "enabled": True,
+                    "single_qubit_depolarizing": 0.0,
+                    "two_qubit_depolarizing": 0.0,
+                    "readout_error": True,
+                },
+            }
+        }
+        backend = QulacsBackend(config)
+        program = """
+            OPENQASM 3;
+            include "stdgates.inc";
+            bit[1] c;
+            c[0] = measure $0;
+        """
+
+        # Act
+        counts, message = backend.execute(program, shots=1000)
+
+        # Assert
+        assert isinstance(counts, dict)
+        assert counts == {"1": 1000}
+        assert message == "job is succeeded"
+
     def test_execute(self, mocker) -> None:
         # Arrange
         mocker.patch(

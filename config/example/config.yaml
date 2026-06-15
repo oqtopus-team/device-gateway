@@ -14,6 +14,17 @@ plugin:
   backend:
     module_path: "device_gateway.plugins.qulacs.backend"
     class_name: "QulacsBackend"
+  # Optional noise model for qulacs
+  # noise_model:
+  #   enabled: true
+  #   # If omitted, use topology fidelity:
+  #   # qubits[].fidelity / couplings[].fidelity
+  #   use_topology_fidelity: true
+  #   # Optional fixed values (override topology when set)
+  #   # single_qubit_depolarizing: 0.001
+  #   # two_qubit_depolarizing: 0.01
+  #   # Apply qubits[].meas_error to measured bits
+  #   readout_error: true
 
 # Qubex plugin configuration. Uncomment to use Qubex backend
 # plugin:
