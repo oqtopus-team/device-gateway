@@ -1,0 +1,39 @@
+proto:
+  max_workers: 2
+  address: "[::]:51021"
+
+device_info:
+  provider_id: "oqtopus"
+  max_shots: 10000
+
+plugin:
+  name: "qiskit_adapter"
+  backend:
+    module_path: "device_gateway.plugins.qiskit_adapter.backend"
+    class_name: "QiskitAdapterBackend"
+  qiskit_adapter:
+    provider:
+      class: "qiskit_qubex_provider.QubexProvider"
+      factory: "from_experiment_config"
+      kwargs:
+        name: "qubex"
+        device_topology: "config/device_topology.json"
+        connect_devices: true
+        native: false
+        # system_id: "64Q-HF-Q1"
+        # chip_id: "64Q"
+        # config_dir: "/app/qubex-config/64Q/config"
+        # params_dir: "/app/qubex-config/64Q/params"
+    backend:
+      method: "get_backend"
+      kwargs: {}
+    transpile_options:
+      scheduling_method: "alap"
+      optimization_level: 1
+    run_options:
+      memory: false
+      plot: false
+    validate: true
+
+device_status_path: config/device_status
+device_topology_json_path: config/device_topology.json
