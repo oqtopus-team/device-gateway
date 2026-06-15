@@ -8,7 +8,7 @@ from device_gateway.core.base_backend import BaseBackend
 
 logger = logging.getLogger("device_gateway")
 
-SUPPORTED_BACKENDS = ("qulacs", "qubex")  # Tuple of supported backend names
+SUPPORTED_BACKENDS = ("qulacs", "qubex", "qiskit_adapter")  # Built-in backend names
 
 
 class BackendPluginManager:
@@ -71,7 +71,13 @@ class BackendPluginManager:
             name = plugin_config.get("name", "qulacs")
             backend_settings = plugin_config.get("backend", {})
             default_module_path = f"device_gateway.plugins.{name}.backend"
-            default_class_name = f"{name.capitalize()}Backend"
+            default_class_names = {
+                "qiskit_adapter": "QiskitAdapterBackend",
+            }
+            default_class_name = default_class_names.get(
+                name,
+                f"{name.capitalize()}Backend",
+            )
 
             module_path = backend_settings.get("module_path", default_module_path)
             class_name = backend_settings.get("class_name", default_class_name)

@@ -1,0 +1,34 @@
+proto:
+  max_workers: 2
+  address: "[::]:51021"
+
+device_info:
+  provider_id: "oqtopus"
+  max_shots: 10000
+
+plugin:
+  name: "qiskit_adapter"
+  backend:
+    module_path: "device_gateway.plugins.qiskit_adapter.backend"
+    class_name: "QiskitAdapterBackend"
+  qiskit_adapter:
+    provider:
+      class: "qiskit_qm_provider.QMProvider"
+      kwargs:
+        state_folder_path: "/path/to/quam/state"
+        # quam_cls:
+        #   class_ref: "my_lab.quam.MyQuam"
+    backend:
+      method: "get_backend"
+      kwargs:
+        simulate: true
+        # backend_cls:
+        #   class_ref: "qiskit_qm_provider.FluxTunableTransmonBackend"
+    transpile_options:
+      optimization_level: 1
+    run_options:
+      memory: false
+    validate: false
+
+device_status_path: config/device_status
+device_topology_json_path: config/device_topology.json

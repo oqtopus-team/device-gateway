@@ -57,7 +57,8 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             ImportError: If the specified plugin is not supported.
         """
         name = plugin_config.get("name")
-        if name not in SUPPORTED_BACKENDS:
+        has_explicit_backend = bool(plugin_config.get("backend", {}).get("module_path"))
+        if name not in SUPPORTED_BACKENDS and not has_explicit_backend:
             logger.error(ERROR_UNSUPPORTED_BACKEND.format(plugin_config))
             raise ImportError(ERROR_UNSUPPORTED_BACKEND.format(plugin_config))
 

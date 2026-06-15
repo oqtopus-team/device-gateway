@@ -1,0 +1,1 @@
+"""Generic Qiskit adapter plugin."""
