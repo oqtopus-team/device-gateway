@@ -2,19 +2,30 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from device_gateway.core.plugin_manager import BackendPluginManager
 from device_gateway.service import ServerImpl
 
 
 @pytest.fixture
-def mock_backend_manager():
-    manager = MagicMock(spec=BackendPluginManager)
-    return manager
-
-
-@pytest.fixture
 def config():
-    return {"backend": "qulacs"}
+    return {
+        "default_backend": "qulacs",
+        "backend_di_container": {
+            "registry": {
+                "qulacs": {
+                    "_target_": "device_gateway.plugins.qulacs.backend.QulacsBackend",
+                    "device_type": "simulator",
+                    "config": {
+                        "device_info": {
+                            "provider_id": "oqtopus",
+                            "max_shots": 10000,
+                        },
+                        "device_status_path": "config/device_status",
+                        "device_topology_json_path": "config/device_topology_sim.json",
+                    },
+                }
+            }
+        },
+    }
 
 
 @pytest.fixture
@@ -27,20 +38,38 @@ def server(mocker, config):
     return ServerImpl(config)
 
 
-def test_server_init_with_default_managers(server):
-    """Test server initialization with default managers."""
-    assert isinstance(server._backend_manager, BackendPluginManager)
+def test_server_init(server):
+    """Test server initialization."""
+    assert server.backend_name == "qulacs"
+    assert server.backend is not None
 
 
-def test_load_plugin_with_unsupported_backend(server):
-    """Test loading unsupported backend plugin."""
-    with pytest.raises(ImportError):
-        server._load_plugin({"name": "unsupported_backend"})
+def test_initialize_backend_sets_backend_name(mocker, config):
+    """Test that _initialize_backend sets backend_name from config."""
+    mocker.patch(
+        "device_gateway.service.DiContainer.get",
+        return_value=MagicMock(),
+    )
+    server = ServerImpl(config)
+    assert server.backend_name == "qulacs"
 
 
-def test_load_plugin_with_import_error(server, mock_backend_manager):
-    """Test handling of import error during plugin loading."""
-    server._backend_manager = mock_backend_manager
-    mock_backend_manager.load_backend.side_effect = ImportError("Test error")
-    with pytest.raises(ImportError):
-        server._load_plugin({"name": "qulacs"})
+def test_initialize_backend_uses_default_when_missing(mocker):
+    """Test that _initialize_backend falls back to DEFAULT_BACKEND."""
+    config_no_default = {
+        "backend_di_container": {
+            "registry": {
+                "qulacs": {
+                    "_target_": "device_gateway.plugins.qulacs.backend.QulacsBackend",
+                    "device_type": "simulator",
+                    "config": {},
+                }
+            }
+        }
+    }
+    mocker.patch(
+        "device_gateway.service.DiContainer.get",
+        return_value=MagicMock(),
+    )
+    server = ServerImpl(config_no_default)
+    assert server.backend_name == "qulacs"

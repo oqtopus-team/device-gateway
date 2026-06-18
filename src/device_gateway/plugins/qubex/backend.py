@@ -1,5 +1,4 @@
 import logging
-import os
 
 import numpy as np
 from qiskit.qasm3 import loads
@@ -16,20 +15,22 @@ logger = logging.getLogger("device_gateway")
 
 
 class QubexBackend(BaseBackend):
-    def __init__(self, config: dict):
-        super().__init__(config)
+    def __init__(self, device_type: str, config: dict, qubex_config: dict):
+        super().__init__(device_type, config)
         logger.info(f"Qubex version: {get_version()}")
-        chip_id = os.getenv("CHIP_ID", "64Q")
+        chip_id = qubex_config["chip_id"]
+        context = {"chip_id": chip_id}
+        config_dir = qubex_config["config_dir"].format_map(context)
+        params_dir = qubex_config["params_dir"].format_map(context)
+        calib_note_path = qubex_config["calib_note_path"].format_map(context)
         self._execute_readout_calibration = True
+        self.classical_registers: list[str] = []
         self._experiment = Experiment(
             chip_id=chip_id,
             qubits=self.physical_ids,
-            config_dir=os.getenv("CONFIG_DIR", f"/app/qubex-config/{chip_id}/config"),
-            params_dir=os.getenv("PARAMS_DIR", f"/app/qubex-config/{chip_id}/params"),
-            calib_note_path=os.getenv(
-                "CALIB_NOTE_PATH",
-                f"/app/qubex-config/{chip_id}/calibration/calib_note.json",
-            ),
+            config_dir=config_dir,
+            params_dir=params_dir,
+            calib_note_path=calib_note_path,
         )
         logger.info(f"Qubex version: {get_version()}")
 

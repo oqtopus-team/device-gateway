@@ -17,11 +17,12 @@ class BaseBackend(metaclass=ABCMeta):
     It no longer provides gate-level operations.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, device_type: str, config: dict):
         """
         Initialize the backend with the configuration.
         This is done once at server startup.
         """
+        self.device_type = device_type
         self.config = config
 
     def load_device_topology(self):
@@ -66,17 +67,13 @@ class BaseBackend(metaclass=ABCMeta):
         """
         Check if the device is a simulator.
         """
-        plugin_config = self.config.get("plugin", {})
-        plugin_name = plugin_config.get("name", "qulacs")
-        return plugin_name == "qulacs"
+        return self.device_type == "simulator"
 
     def is_qpu(self) -> bool:
         """
         Check if the device is a QPU.
         """
-        plugin_config = self.config.get("plugin", {})
-        plugin_name = plugin_config.get("name", "qulacs")
-        return plugin_name == "qubex"
+        return self.device_type == "QPU"
 
     @property
     def device_topology(self) -> dict:
@@ -112,11 +109,15 @@ class BaseBackend(metaclass=ABCMeta):
             topology = self.load_device_topology()
             if info.get("device_id") is None:
                 if "device_id" not in topology:
-                    raise ValueError("device_id is not set in config and not found in topology")
+                    raise ValueError(
+                        "device_id is not set in config and not found in topology"
+                    )
                 info["device_id"] = topology["device_id"]
             if info.get("max_qubits") is None:
                 if "qubits" not in topology:
-                    raise ValueError("max_qubits is not set in config and qubits not found in topology")
+                    raise ValueError(
+                        "max_qubits is not set in config and qubits not found in topology"
+                    )
                 info["max_qubits"] = len(topology["qubits"])
 
         return info

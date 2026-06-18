@@ -1,20 +1,14 @@
 import argparse
 import json
 import logging
-import logging.config
-import os
 import time
 from concurrent import futures
-from pathlib import Path
 
 import grpc
-import yaml  # type: ignore[import]
 from grpc_reflection.v1alpha import reflection
+from oqtopus_util.config import load_config, setup_logging
+from oqtopus_util.di import DiContainer
 
-from device_gateway.core.plugin_manager import (
-    SUPPORTED_BACKENDS,
-    BackendPluginManager,
-)
 from device_gateway.gen.qpu.v1 import qpu_pb2, qpu_pb2_grpc
 
 logger = logging.getLogger("device_gateway")
@@ -22,7 +16,6 @@ logger = logging.getLogger("device_gateway")
 
 # Constants
 DEFAULT_BACKEND = "qulacs"
-ERROR_UNSUPPORTED_BACKEND = "Backend '{}' is specified but not supported."
 ERROR_DEVICE_INACTIVE = "device is inactive"
 ERROR_INTERNAL_SERVER = "internal server error"
 ERROR_UNSUPPORTED_STATUS = "Service status '{}' is not supported."
@@ -40,32 +33,11 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             config: Configuration dictionary.
         """
         super().__init__()
-        self._backend_manager = BackendPluginManager()
         self._initialize_backend(config)
         logger.info(f"ServerImpl initialized with backend: {self.backend_name}")
         logger.info(f"device_info={self.backend.device_info}")
         logger.info(f"device_topology={self.backend.device_topology}")
         logger.info(f"device_status={self.backend.device_status}")
-
-    def _load_plugin(self, plugin_config: dict) -> None:
-        """Load a plugin's backend and circuit components.
-
-        Args:
-            plugin_config: Plugin configuration dictionary
-
-        Raises:
-            ImportError: If the specified plugin is not supported.
-        """
-        name = plugin_config.get("name")
-        if name not in SUPPORTED_BACKENDS:
-            logger.error(ERROR_UNSUPPORTED_BACKEND.format(plugin_config))
-            raise ImportError(ERROR_UNSUPPORTED_BACKEND.format(plugin_config))
-
-        try:
-            self._backend_manager.load_backend(config={"plugin": plugin_config})
-        except ImportError as e:
-            logger.error(f"Failed to load plugin {name}: {str(e)}")
-            raise
 
     def _initialize_backend(self, config: dict) -> None:
         """Initialize backend with configuration.
@@ -73,12 +45,12 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         Args:
             config: Configuration dictionary.
         """
-        plugin_config = config.get("plugin", {"name": DEFAULT_BACKEND})
-        self.backend_name = plugin_config.get("name", DEFAULT_BACKEND)
-        self._load_plugin(plugin_config)
-        self.backend = self._backend_manager.get_backend(self.backend_name, config)
+        registry = config["backend_di_container"]["registry"]
+        self._di_container = DiContainer(registry)
+        self.backend_name = config.get("default_backend", DEFAULT_BACKEND)
+        self.backend = self._di_container.get(self.backend_name)
 
-    def _create_error_response(self, message: str) -> qpu_pb2.CallJobResponse:
+    def _create_error_response(self, message: str) -> qpu_pb2.CallJobResponse:  # type: ignore[name-defined]
         """Create error response with the given message.
 
         Args:
@@ -146,7 +118,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             )
             return response
 
-    def _get_service_status(self) -> qpu_pb2.ServiceStatus:
+    def _get_service_status(self) -> qpu_pb2.ServiceStatus:  # type: ignore[name-defined]
         """Get current service status.
 
         Returns:
@@ -156,13 +128,15 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             ValueError: If the service status is not supported.
         """
         if self.backend.is_active():
-            return qpu_pb2.ServiceStatus.SERVICE_STATUS_ACTIVE
+            return qpu_pb2.ServiceStatus.SERVICE_STATUS_ACTIVE  # type: ignore[attr-defined]
         elif self.backend.is_inactive():
-            return qpu_pb2.ServiceStatus.SERVICE_STATUS_INACTIVE
+            return qpu_pb2.ServiceStatus.SERVICE_STATUS_INACTIVE  # type: ignore[attr-defined]
         elif self.backend.is_maintenance():
-            return qpu_pb2.ServiceStatus.SERVICE_STATUS_MAINTENANCE
+            return qpu_pb2.ServiceStatus.SERVICE_STATUS_MAINTENANCE  # type: ignore[attr-defined]
         else:
-            raise ValueError(ERROR_UNSUPPORTED_STATUS.format(self.device_status))
+            raise ValueError(
+                ERROR_UNSUPPORTED_STATUS.format(self.backend.device_status)
+            )
 
     def GetServiceStatus(self, request, context):
         """Get current service status.
@@ -229,35 +203,14 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
             return response
 
 
-def assign_environ(config: dict) -> dict:
-    """Expand environment variables and the user directory "~" in the values of `dict`.
-
-    Args:
-        config (dict): `dict` that expands environment variables
-            and the user directory "~" in its values.
-
-    Returns:
-        dict: expanded `dict`.
-
-    """
-    for key, value in config.items():
-        if type(value) is dict:
-            config[key] = assign_environ(value)
-        elif type(value) is str:
-            tmp_value = str(os.path.expandvars(value))
-            config[key] = os.path.expanduser(tmp_value)  # noqa: PTH111
-    return config
-
-
 def serve(config_yaml_path: str, logging_yaml_path: str):
-    with Path(config_yaml_path).open("r", encoding="utf-8") as file:
-        config_yaml = assign_environ(yaml.safe_load(file))
-    with Path(logging_yaml_path).open("r", encoding="utf-8") as file:
-        logging_yaml = assign_environ(yaml.safe_load(file))
-        logging.config.dictConfig(logging_yaml)
+    logging_cfg = load_config(logging_yaml_path)
+    setup_logging(logging_cfg)
+
+    config_yaml = load_config(config_yaml_path)
 
     max_workers = config_yaml["proto"].get("max_workers", 10)
-    address = config_yaml["proto"].get("address", "[::]:50051")
+    address = config_yaml["proto"].get("address", "localhost:51021")
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
     qpu_pb2_grpc.add_QpuServiceServicer_to_server(
         ServerImpl(config=config_yaml), server
