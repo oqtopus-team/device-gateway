@@ -1,7 +1,7 @@
 # gRPC settings
 proto:
   max_workers: 2
-  address: "[::]:51021"
+  address: "localhost:51021"
 
 # Common backend settings
 common_backend_settings: &common_backend_settings
