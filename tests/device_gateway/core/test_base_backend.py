@@ -11,7 +11,6 @@ def make_config(device_id="from_config", max_qubits=7):
             "provider_id": "oqtopus",
             "max_shots": 1000,
         },
-        "plugin": {"name": "qulacs"},
     }
 
 
@@ -28,7 +27,9 @@ class TestDeviceInfo:
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=make_topology(device_id="topology_id", num_qubits=4),
         )
-        backend = QulacsBackend(make_config(device_id="config_id", max_qubits=7))
+        backend = QulacsBackend(
+            "simulator", make_config(device_id="config_id", max_qubits=7)
+        )
 
         info = backend.device_info
 
@@ -40,7 +41,7 @@ class TestDeviceInfo:
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=make_topology(device_id="topology_id"),
         )
-        backend = QulacsBackend(make_config(device_id=None))
+        backend = QulacsBackend("simulator", make_config(device_id=None))
 
         info = backend.device_info
 
@@ -51,32 +52,36 @@ class TestDeviceInfo:
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=make_topology(num_qubits=5),
         )
-        backend = QulacsBackend(make_config(max_qubits=None))
+        backend = QulacsBackend("simulator", make_config(max_qubits=None))
 
         info = backend.device_info
 
         assert info["max_qubits"] == 5
 
-    def test_raises_error_when_device_id_missing_from_both_config_and_topology(self, mocker):
+    def test_raises_error_when_device_id_missing_from_both_config_and_topology(
+        self, mocker
+    ):
         topology = make_topology()
         del topology["device_id"]
         mocker.patch(
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=topology,
         )
-        backend = QulacsBackend(make_config(device_id=None))
+        backend = QulacsBackend("simulator", make_config(device_id=None))
 
         with pytest.raises(ValueError, match="device_id"):
             backend.device_info
 
-    def test_raises_error_when_max_qubits_missing_from_both_config_and_topology(self, mocker):
+    def test_raises_error_when_max_qubits_missing_from_both_config_and_topology(
+        self, mocker
+    ):
         topology = make_topology()
         del topology["qubits"]
         mocker.patch(
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=topology,
         )
-        backend = QulacsBackend(make_config(max_qubits=None))
+        backend = QulacsBackend("simulator", make_config(max_qubits=None))
 
         with pytest.raises(ValueError, match="max_qubits"):
             backend.device_info
@@ -86,7 +91,9 @@ class TestDeviceInfo:
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=make_topology(device_id="topology_id", num_qubits=5),
         )
-        backend = QulacsBackend(make_config(device_id=None, max_qubits=None))
+        backend = QulacsBackend(
+            "simulator", make_config(device_id=None, max_qubits=None)
+        )
 
         backend.device_info
 
