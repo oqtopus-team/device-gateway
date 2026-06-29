@@ -53,7 +53,7 @@ class TestQulacsBackend:
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=json.loads(device_topology),
         )
-        backend = QulacsBackend({})
+        backend = QulacsBackend("simulator", {})
         program = """
             OPENQASM 3;
             include "stdgates.inc";
@@ -81,7 +81,7 @@ class TestQulacsBackend:
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=json.loads(device_topology),
         )
-        backend = QulacsBackend({})
+        backend = QulacsBackend("simulator", {})
         # qubit $1 is not used in this circuit
         program = """
             OPENQASM 3;
@@ -109,7 +109,7 @@ class TestQulacsBackend:
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=json.loads(device_topology),
         )
-        backend = QulacsBackend({})
+        backend = QulacsBackend("simulator", {})
         # c[0] is not assigned, so its value is 0
         program = """
             OPENQASM 3;
@@ -133,7 +133,7 @@ class TestQulacsBackend:
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=json.loads(device_topology),
         )
-        backend = QulacsBackend({})
+        backend = QulacsBackend("simulator", {})
         # No operation is applied to $1, so its value is 0
         program = """
             OPENQASM 3;
@@ -161,7 +161,7 @@ class TestQulacsBackend:
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=json.loads(device_topology),
         )
-        backend = QulacsBackend({})
+        backend = QulacsBackend("simulator", {})
         program = """
             OPENQASM 3;
             include "stdgates.inc";
@@ -187,7 +187,7 @@ class TestQulacsBackend:
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=json.loads(device_topology),
         )
-        backend = QulacsBackend({})
+        backend = QulacsBackend("simulator", {})
         # 2-qubit circuit with only one measurement
         program = """
             OPENQASM 3;

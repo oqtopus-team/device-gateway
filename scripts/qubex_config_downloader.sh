@@ -1,28 +1,39 @@
-#!/bin/bash
+ #!/bin/bash
+set -euo pipefail
+
 set -a
 source .env
 set +a
 
-echo "$QDASH_API_URL"
+API_URL=${QDASH_API_URL:-http://localhost:6004}
+TOKEN=${QDASH_API_TOKEN:-}
 
-API_URL=${QDASH_API_URL:-http://localhost:6004/api}
+ZIP_PATH="./tmp/qubex-config.zip"
+
+cleanup() {
+  rm -f "$ZIP_PATH"
+}
+trap cleanup EXIT
 
 echo "Using QDash API base URL: ${API_URL}"
 
+mkdir -p qubex-config tmp
+
 echo "Downloading calibration note..."
-curl -X GET "${API_URL}/calibration/note" \
+curl --fail -sS -X GET "${API_URL}/calibrations/note" \
   -H 'accept: application/json' \
-  -H 'X-Username: admin' | jq '.note' > qubex_config/calib_note.json
-
-echo "Process complete. 'calib_note.json' has been created."
-
+  -H "Authorization: Bearer ${TOKEN}" \
+  | jq '.note' > qubex-config/calib_note.json
 
 echo "Downloading Qubex configuration..."
-mkdir -p ./tmp
-curl -X 'GET' \
-  "${API_URL}/file/zip?path=%2Fapp%2Fconfig%2F" \
-  -H 'accept: */*' \
-  --output ./tmp/config.zip
-unzip -o ./tmp/config.zip -d ./qubex_config/
-rm -rf ./tmp/config.zip
-echo "Downloading Qubex configuration..."
+curl --fail -sS -L -X GET \
+  "${API_URL}/files/zip?path=%2Fapp%2Fconfig%2Fqubex-config" \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -o "$ZIP_PATH"
+
+rm -rf ./qubex-config
+mkdir -p ./qubex-config
+
+  unzip -oq "$ZIP_PATH" -d ./qubex-config
+
+  echo "Qubex configuration downloaded."

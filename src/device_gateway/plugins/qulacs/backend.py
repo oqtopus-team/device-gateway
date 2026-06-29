@@ -12,8 +12,8 @@ logger = logging.getLogger("device_gateway")
 
 
 class QulacsBackend(BaseBackend):
-    def __init__(self, config: dict):
-        super().__init__(config)
+    def __init__(self, device_type: str, config: dict):
+        super().__init__(device_type, config)
 
     def _get_circuit(self) -> QulacsCircuit:
         return QulacsCircuit(self)

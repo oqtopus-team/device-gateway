@@ -19,11 +19,12 @@ class BaseBackend(metaclass=ABCMeta):
     It no longer provides gate-level operations.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, device_type: str, config: dict):
         """
         Initialize the backend with the configuration.
         This is done once at server startup.
         """
+        self.device_type = device_type
         self.config = config
 
     def load_device_topology(self):
@@ -68,17 +69,13 @@ class BaseBackend(metaclass=ABCMeta):
         """
         Check if the device is a simulator.
         """
-        plugin_config = self.config.get("plugin", {})
-        plugin_name = plugin_config.get("name", "qulacs")
-        return plugin_name == "qulacs"
+        return self.device_type == "simulator"
 
     def is_qpu(self) -> bool:
         """
         Check if the device is a QPU.
         """
-        plugin_config = self.config.get("plugin", {})
-        plugin_name = plugin_config.get("name", "qulacs")
-        return plugin_name == "qubex"
+        return self.device_type == "QPU"
 
     @property
     def device_topology(self) -> dict:
@@ -86,7 +83,7 @@ class BaseBackend(metaclass=ABCMeta):
         Returns the device topology, e.g., {"qubits": [{"id": 0, "physical_id": 5}], "couplings": [{"control": 0, "target": 1}]}
         """
         return self.load_device_topology()
-    
+
     @property
     def physical_ids(self) -> list:
         """
@@ -104,13 +101,28 @@ class BaseBackend(metaclass=ABCMeta):
     @property
     def device_info(self) -> dict:
         """
-        Returns the device information, e.g., {"device_id": "QPU1", "device_type": "QPU"}
+        Returns the device information, e.g., {"device_id": "QPU1", "type": "QPU"}
         """
-        if self.is_simulator():
-            self.config["device_info"]["type"] = "simulator"
-        else:
-            self.config["device_info"]["type"] = "QPU"
-        return self.config["device_info"]
+        info = dict(self.config["device_info"])
+        info["type"] = "simulator" if self.is_simulator() else "QPU"
+
+        # Load topology once when either field needs a fallback value
+        if info.get("device_id") is None or info.get("max_qubits") is None:
+            topology = self.load_device_topology()
+            if info.get("device_id") is None:
+                if "device_id" not in topology:
+                    raise ValueError(
+                        "device_id is not set in config and not found in topology"
+                    )
+                info["device_id"] = topology["device_id"]
+            if info.get("max_qubits") is None:
+                if "qubits" not in topology:
+                    raise ValueError(
+                        "max_qubits is not set in config and qubits not found in topology"
+                    )
+                info["max_qubits"] = len(topology["qubits"])
+
+        return info
 
     @property
     def physical_map(self):
