@@ -211,7 +211,10 @@ def serve(config_yaml_path: str, logging_yaml_path: str):
 
     max_workers = config_yaml["proto"].get("max_workers", 10)
     address = config_yaml["proto"].get("address", "localhost:51021")
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
+    server = grpc.server(
+        futures.ThreadPoolExecutor(max_workers),
+        options=config_yaml["proto"].get("grpc_options", []),
+    )
     qpu_pb2_grpc.add_QpuServiceServicer_to_server(
         ServerImpl(config=config_yaml), server
     )
