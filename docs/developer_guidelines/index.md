@@ -2,7 +2,9 @@
 
 ## Branch Strategy
 
-As shown in the diagram below, the `develop` branch is branched off from the `main` branch, and feature branches (`feature/xxx`) are branched off from the `develop` branch for development. The `main` branch is the release branch, while the `develop` branch is for development.
+As shown in the diagram below, the `develop` branch is branched off from the `main` branch,
+and feature branches (`feature/xxx`) are branched off from the `develop` branch for development.
+The `main` branch is the release branch, while the `develop` branch is for development.
 
 The `develop` branch always maintains the latest merged code, so when performing hotfixes, branches are created from the `develop` branch for the necessary fixes.
 

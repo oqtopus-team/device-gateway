@@ -5,21 +5,22 @@ set +a
 
 echo "$QDASH_API_URL"
 
-API_URL=${QDASH_API_URL:-http://localhost:6004/api}
+API_URL=${QDASH_API_URL:-http://localhost:6004}
+TOKEN=${QDASH_API_TOKEN:-}
 
 echo "Using QDash API base URL: ${API_URL}"
 
 echo "Posting device topology data..."
-curl -X POST "${API_URL}/device_topology" \
+curl -X POST "${API_URL}/device-topology" \
   -H 'accept: application/json' \
-  -H 'X-Username: admin' \
+  -H "Authorization: Bearer ${TOKEN}" \
   -H 'Content-Type: application/json' \
   -d @config/device_topology_request.json | jq . > config/device_topology.json
 
 echo "Generating device topology plot..."
-curl -X POST "${API_URL}/device_topology/plot" \
+curl -X POST "${API_URL}/device-topology/plot" \
   -H 'accept: */*' \
-  -H 'X-Username: admin' \
+  -H "Authorization: Bearer ${TOKEN}"  \
   -H 'Content-Type: application/json' \
   -d @config/device_topology.json > config/device_topology.png
 

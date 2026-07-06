@@ -6,7 +6,7 @@ PROTO_URL := https://raw.githubusercontent.com/oqtopus-team/oqtopus-engine/main/
 SPEC_DIR := spec
 PROTO_FILE := $(SPEC_DIR)/qpu.proto
 
-.PHONY: proto-download proto-generate, generate-config, generate-deveice-topology, download-qubex-config, job, run, test, docs
+.PHONY: proto-download proto-generate generate-config run format lint test verify docs-lint docs-build docs-serve generate-device-topology download-qubex-config change-status-to-active change-status-to-inactive change-status-to-maintenance install-qubex help
 
 proto-download: ## Download proto file from oqtopus-engine
 	@echo "Downloading proto file..."
@@ -16,15 +16,32 @@ proto-generate: proto-download ## Generate gRPC code from proto file
 	@echo "Generating gRPC code..."
 	@cd $(SPEC_DIR) && MAKE generate-qpu
 
-run:
+run: ## Run the application
 	@uv run src/device_gateway/service.py -c config/config.yaml -l config/logging.yaml
 
-test:
+format: ## Run code formatting
+	@uv run ruff check --fix
+	@uv run ruff format
+
+lint: ## Run linting
+	@uv lock --check
+	@uv run ruff check
+	@uv run ruff format --check
+	@uv run mypy
+
+test: ## Run tests
 	@uv run pytest
 
+verify: format lint test ## Run all verification steps (formatting, linting, testing)
 
-docs:
+docs-lint: ## Run documentation linting
+	@uv run pymarkdownlnt scan docs
+
+docs-build: ## Build documentation
 	@uv run mkdocs build
+
+docs-serve: ## Serve documentation locally
+	@uv run mkdocs serve
 
 generate-config: ## Generate config
 	@echo "Generating config..."
