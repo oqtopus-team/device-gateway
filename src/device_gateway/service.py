@@ -130,6 +130,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                 )
                 response = self._create_error_response(ERROR_INTERNAL_SERVER)
                 span.set_attribute("device_gateway.call_job.status", "failure")
+                span.set_status(trace.StatusCode.ERROR, "call_job failed")
 
             finally:
                 elapsed_time = time.time() - start_time
