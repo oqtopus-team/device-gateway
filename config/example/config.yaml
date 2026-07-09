@@ -1,7 +1,7 @@
 # gRPC settings
 proto:
-  max_workers: 2
-  address: "localhost:51021"
+  max_workers: ${GATEWAY_WORKERS, 2} # Maximum number of workers
+  address: ${GATEWAY_ADDRESS, "localhost:51012"} # Address and port for RPCs
 
 # Common backend settings
 common_backend_settings: &common_backend_settings
