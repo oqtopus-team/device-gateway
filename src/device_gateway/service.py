@@ -107,7 +107,11 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                         "Please check the device status."
                     )
                     span.set_attribute("device_gateway.call_job.status", "device_inactive")
-                    return self._create_error_response(ERROR_DEVICE_INACTIVE)
+                    # assign instead of returning directly: the finally block
+                    # below reads response.status and returns response, so an
+                    # early return here would hit an unbound `response`
+                    response = self._create_error_response(ERROR_DEVICE_INACTIVE)
+                    return response
 
                 logger.info(f"program={request.program}, shots={request.shots}")
                 counts, message = self.backend.execute(
