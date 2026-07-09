@@ -19,19 +19,12 @@ handlers:
     mode: a # append
     backupCount: 9
     encoding: utf-8
-  # OTel LoggingHandler — without this, dictConfig replaces the root
-  # logger's handlers and silently drops the handler that
-  # opentelemetry-instrument attached at startup, so OTLP log export
-  # never happens.
-  otlp:
-    class: opentelemetry.sdk._logs.LoggingHandler
-    level: DEBUG
 loggers:
   device_gateway:
     level: DEBUG
-    handlers: [console, file, otlp]
+    handlers: [console, file]
     propagate: False
 root:
   level: WARNING
-  handlers: [console, file, otlp]
+  handlers: [console, file]
 disable_existing_loggers: False
