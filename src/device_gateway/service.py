@@ -108,10 +108,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                     )
                     span.set_attribute("device_gateway.call_job.status", "device_inactive")
                     span.set_status(trace.StatusCode.ERROR, "device inactive")
-                    # bind response before returning: the finally block below
-                    # reads response.status
-                    response = self._create_error_response(ERROR_DEVICE_INACTIVE)
-                    return response
+                    return self._create_error_response(ERROR_DEVICE_INACTIVE)
 
                 logger.info(f"program={request.program}, shots={request.shots}")
                 counts, message = self.backend.execute(
