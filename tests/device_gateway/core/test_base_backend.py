@@ -11,8 +11,11 @@ def make_config(device_id="from_config", max_qubits=7):
             "provider_id": "oqtopus",
             "max_shots": 1000,
         },
-        "supported_gates": ["x", "sx", "rz", "cx", "measure", "barrier", "delay"],
     }
+
+
+def make_plugin_config():
+    return {"supported_gates": ["x", "sx", "rz", "cx", "measure", "barrier", "delay"]}
 
 
 def make_topology(device_id="from_topology", num_qubits=4):
@@ -108,7 +111,7 @@ class TestSupportedGates:
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=make_topology(),
         )
-        backend = QulacsBackend("simulator", make_config())
+        backend = QulacsBackend("simulator", make_config(), make_plugin_config())
 
         assert backend.supported_gates == {
             "x",
@@ -120,14 +123,21 @@ class TestSupportedGates:
             "delay",
         }
 
-    def test_supported_gates_is_none_when_omitted(self, mocker):
+    def test_supported_gates_is_none_when_plugin_config_omitted(self, mocker):
         mocker.patch(
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=make_topology(),
         )
-        config = make_config()
-        del config["supported_gates"]
-        backend = QulacsBackend("simulator", config)
+        backend = QulacsBackend("simulator", make_config())
+
+        assert backend.supported_gates is None
+
+    def test_supported_gates_is_none_when_key_omitted_from_plugin_config(self, mocker):
+        mocker.patch(
+            "device_gateway.core.base_backend.BaseBackend.load_device_topology",
+            return_value=make_topology(),
+        )
+        backend = QulacsBackend("simulator", make_config(), {})
 
         assert backend.supported_gates is None
 

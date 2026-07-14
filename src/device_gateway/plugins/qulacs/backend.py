@@ -12,8 +12,17 @@ logger = logging.getLogger("device_gateway")
 
 
 class QulacsBackend(BaseBackend):
-    def __init__(self, device_type: str, config: dict):
-        super().__init__(device_type, config)
+    def __init__(
+        self, device_type: str, config: dict, plugin_config: dict | None = None
+    ):
+        super().__init__(device_type, config, plugin_config)
+        # supported_gates is optional: when present, only those instruction names may
+        # be compiled; when absent, QulacsCompiler performs no gate-name validation.
+        self.supported_gates = (
+            set(self.plugin_config["supported_gates"])
+            if "supported_gates" in self.plugin_config
+            else None
+        )
         self._compiler = QulacsCompiler(self)
 
     def _execute(self, circuit: QulacsQuantumCircuit, shots: int = 1024) -> dict:

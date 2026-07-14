@@ -9,6 +9,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("device_gateway")
 
+# Qubex only ever drives pulses for this fixed native gate set, so unlike Qulacs
+# it is not configurable via supported_gates in config.yaml.
+_SUPPORTED_GATES = {"x", "sx", "rz", "cx", "measure", "barrier", "delay"}
+
 
 class QubexCompiler:
     """Compiles a Qiskit circuit into a Qubex pulse schedule."""
@@ -129,10 +133,7 @@ class QubexCompiler:
 
         for instruction in qc.data:
             name = instruction.name
-            if (
-                self._backend.supported_gates is not None
-                and name not in self._backend.supported_gates
-            ):
+            if name not in _SUPPORTED_GATES:
                 logger.error(f"Unsupported instruction: {name}")
                 raise ValueError(f"Unsupported instruction: {name}")
 
@@ -199,10 +200,7 @@ class QubexCompiler:
         pulse_scheduler = []
         for instruction in qc.data:
             name = instruction.operation.name
-            if (
-                self._backend.supported_gates is not None
-                and name not in self._backend.supported_gates
-            ):
+            if name not in _SUPPORTED_GATES:
                 logger.error(f"Unsupported instruction: {name}")
                 raise ValueError(f"Unsupported instruction: {name}")
 

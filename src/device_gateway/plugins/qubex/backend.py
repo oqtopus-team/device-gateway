@@ -15,14 +15,14 @@ logger = logging.getLogger("device_gateway")
 
 
 class QubexBackend(BaseBackend):
-    def __init__(self, device_type: str, config: dict, qubex_config: dict):
-        super().__init__(device_type, config)
+    def __init__(self, device_type: str, config: dict, plugin_config: dict):
+        super().__init__(device_type, config, plugin_config)
         logger.info(f"Qubex version: {get_version()}")
-        chip_id = qubex_config["chip_id"]
+        chip_id = plugin_config["chip_id"]
         context = {"chip_id": chip_id}
-        config_dir = qubex_config["config_dir"].format_map(context)
-        params_dir = qubex_config["params_dir"].format_map(context)
-        calib_note_path = qubex_config["calib_note_path"].format_map(context)
+        config_dir = plugin_config["config_dir"].format_map(context)
+        params_dir = plugin_config["params_dir"].format_map(context)
+        calib_note_path = plugin_config["calib_note_path"].format_map(context)
         self._execute_readout_calibration = True
         self.classical_registers: list[str] = []
         self._experiment = Experiment(

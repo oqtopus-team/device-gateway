@@ -13,12 +13,6 @@ class BaseBackend(metaclass=ABCMeta):
     BaseBackend handles the execution of a compiled circuit on quantum hardware.
     It no longer provides gate-level operations.
 
-    Gate validation:
-        - `supported_gates` is optional in config. When present, only those instruction
-          names may be compiled; anything else raises before reaching the backend's
-          compiler. When omitted (commented out in config.yaml), no gate-name validation
-          is performed at all.
-
     Device topology loading and caching:
         - `load_device_topology()` always reads the topology JSON file from disk and
           overwrites the cache with the result. Call it directly when fresh/live data
@@ -28,16 +22,22 @@ class BaseBackend(metaclass=ABCMeta):
           cached value and only reads from disk on first access.
     """
 
-    def __init__(self, device_type: str, config: dict):
+    def __init__(
+        self, device_type: str, config: dict, plugin_config: dict | None = None
+    ):
         """
         Initialize the backend with the configuration.
         This is done once at server startup.
+
+        Args:
+            device_type: The device type ("simulator" or "QPU").
+            config: Settings shared across all backends (device_info, device_status_path,
+                device_topology_json_path, ...).
+            plugin_config: Settings specific to this backend.
         """
         self.device_type = device_type
         self.config = config
-        self.supported_gates = (
-            set(config["supported_gates"]) if "supported_gates" in config else None
-        )
+        self.plugin_config = plugin_config or {}
         self._device_topology_cache: dict | None = None
 
     def load_device_topology(self) -> dict:

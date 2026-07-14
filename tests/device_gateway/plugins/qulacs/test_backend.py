@@ -83,9 +83,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         program = """
             OPENQASM 3;
@@ -116,9 +115,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # qubit $1 is not used in this circuit
         program = """
@@ -149,9 +147,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # c[0] is not assigned, so its value is 0
         program = """
@@ -178,9 +175,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # No operation is applied to $1, so its value is 0
         program = """
@@ -211,9 +207,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         program = """
             OPENQASM 3;
@@ -242,9 +237,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # 2-qubit circuit with only one measurement
         program = """
@@ -271,9 +265,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # The 4-qubit topology only defines ids 0-3, so $4 is out of range
         program = """
@@ -296,9 +289,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         program = """
             OPENQASM 3;
@@ -324,9 +316,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # u3(pi, 0, 0) is equivalent to an X gate
         program = """
@@ -352,9 +343,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # $0 is excited then swapped into $1, so measuring $1 should read 1
         program = """
@@ -381,9 +371,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # H-CZ-H on the target is equivalent to CX; with control ($0) set to 1,
         # the target ($1) must flip to 1 deterministically.
@@ -411,13 +400,9 @@ class TestQulacsBackend:
             "device_gateway.core.base_backend.BaseBackend.load_device_topology",
             return_value=json.loads(device_topology),
         )
-        backend = QulacsBackend(
-            "simulator",
-            {
-                # supported_gates omitted so the compiler's own dispatch is exercised
-                # directly, rather than being rejected earlier by the config check.
-            },
-        )
+        # plugin_config omitted so the compiler's own dispatch is exercised
+        # directly, rather than being rejected earlier by the config check.
+        backend = QulacsBackend("simulator", {})
         # ccx (Toffoli) is a valid stdgate, but has no Qulacs dispatch entry
         program = """
             OPENQASM 3;
@@ -439,9 +424,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         program = """
             OPENQASM 3;
@@ -466,9 +450,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # H-Z-H is equivalent to X
         program = """
@@ -496,9 +479,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # S*S is equivalent to Z; sandwiched by H this behaves as X
         program = """
@@ -527,9 +509,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # Sdg*Sdg is equivalent to Z; sandwiched by H this behaves as X
         program = """
@@ -558,9 +539,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # T^4 is equivalent to Z; sandwiched by H this behaves as X
         program = """
@@ -591,9 +571,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # Tdg^4 is equivalent to Z; sandwiched by H this behaves as X
         program = """
@@ -624,9 +603,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # SX followed by its inverse SXDG cancels out, leaving only the X applied first.
         # stdgates.inc has no direct "sxdg" call, so the inverse modifier is used
@@ -656,9 +634,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # p(pi/2) is equivalent to S; applying it twice sandwiched by H behaves as X
         program = """
@@ -687,9 +664,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # u1(pi/2) is equivalent to S; applying it twice sandwiched by H behaves as X
         program = """
@@ -718,9 +694,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # u2(0, pi) is equivalent to H; applying it twice is the identity
         program = """
@@ -747,9 +722,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # ry(pi/2)|0> = |+>, so a following H deterministically returns to |0>.
         # This regresses if Qulacs's angle-negation convention for ry is wrong.
@@ -777,9 +751,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         # rx(pi/2)|0> is the -1 eigenstate of Y; Sdg-then-H deterministically maps
         # it to |1>. This regresses if Qulacs's angle-negation convention for rx is wrong.
@@ -808,9 +781,8 @@ class TestQulacsBackend:
         )
         backend = QulacsBackend(
             "simulator",
-            {
-                "supported_gates": SUPPORTED_GATES,
-            },
+            {},
+            {"supported_gates": SUPPORTED_GATES},
         )
         program = """
             OPENQASM 3;

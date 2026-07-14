@@ -165,9 +165,8 @@ def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
 
 `execute()` is fully responsible for parsing the incoming program, compiling it to the backend's native
 representation, running it, and returning `(counts, message)`. `BaseBackend` itself only provides shared,
-backend-agnostic functionality (device topology/status loading, qubit label <-> index mapping, gate-name
-validation via the optional `supported_gates` config key); it does not prescribe how a backend parses programs
-or represents circuits internally.
+backend-agnostic functionality (device topology/status loading, qubit label <-> index mapping); it does not
+prescribe how a backend parses programs, represents circuits internally, or validates gate names.
 
 ### Backends included with this repository
 
@@ -201,13 +200,21 @@ The configuration file contains the following sections:
     - `max_shots`: The maximum number of shots supported by the device.
   - `device_status_path`: The path to the device status file.
   - `device_topology_json_path`: The path to the device topology JSON file.
-  - `supported_gates`: The list of OpenQASM3 instruction names the backend's compiler is allowed to execute (e.g. `[x, sx, rz, cx, measure, barrier, delay]`). Optional — comment it out to disable gate-name validation entirely and allow any instruction the compiler recognizes.
 - `default_backend`: The backend to use. Available options are `"qulacs"` and `"qubex"`. Required.
 - `backend_di_container`: The dependency injection container configuration for backends.
   - `registry`: The registry of available backends. Each entry has the following fields:
     - `_target_`: The fully qualified class name of the backend.
     - `device_type`: The device type (`"simulator"` or `"QPU"`).
     - `config`: The backend configuration (reference to `common_backend_settings`).
+    - `plugin_config`: Settings specific to this backend. For Qulacs, this is where
+      `supported_gates` goes — the list of OpenQASM3 instruction names its compiler is
+      allowed to execute (e.g. `[x, sx, rz, cx, measure, barrier, delay]`); optional —
+      comment it out to disable gate-name validation entirely and allow any instruction
+      the compiler recognizes. Qubex has no `supported_gates` entry — its native gate set
+      is fixed in code, since it is dictated by the physical hardware rather than
+      something a config file can turn on or off. `plugin_config` also carries whatever
+      else a backend itself needs (e.g. Qubex's `chip_id`, `config_dir`, `params_dir`,
+      `calib_note_path`).
   - Only the backend specified by `default_backend` is instantiated. Other entries in `registry` are ignored. For example, if `default_backend: qulacs`, a `qubex` entry in `registry` will not be loaded.
 
 ### Simulator Example
@@ -227,8 +234,6 @@ common_backend_settings: &common_backend_settings
     max_shots: 10000
   device_status_path: config/device_status
   device_topology_json_path: config/device_topology_sim.json
-  # Comment out supported_gates below to disable gate-name validation entirely.
-  supported_gates: [x, sx, rz, cx, measure, barrier, delay]
 
 # Backend configuration
 default_backend: qulacs  # Available options: "qulacs", "qubex"
@@ -241,12 +246,15 @@ backend_di_container:
       _target_: device_gateway.plugins.qulacs.backend.QulacsBackend
       device_type: simulator
       config: *common_backend_settings
+      plugin_config:
+        # Comment out supported_gates below to disable gate-name validation entirely.
+        supported_gates: [x, sx, rz, cx, measure, barrier, delay]
     # QubexBackend settings
     qubex:
       _target_: device_gateway.plugins.qubex.backend.QubexBackend
       device_type: QPU
       config: *common_backend_settings
-      qubex_config:
+      plugin_config:
         chip_id: ${CHIP_ID, 64Q}
         config_dir: ${CONFIG_DIR, "/app/qubex-config/{chip_id}/config"}
         params_dir: ${PARAMS_DIR, "/app/qubex-config/{chip_id}/params"}
@@ -270,8 +278,6 @@ common_backend_settings: &common_backend_settings
     max_shots: 10000
   device_status_path: config/device_status
   device_topology_json_path: config/device_topology_sim.json
-  # Comment out supported_gates below to disable gate-name validation entirely.
-  supported_gates: [x, sx, rz, cx, measure, barrier, delay]
 
 # Backend configuration
 default_backend: qubex  # Available options: "qulacs", "qubex"
@@ -284,12 +290,15 @@ backend_di_container:
       _target_: device_gateway.plugins.qulacs.backend.QulacsBackend
       device_type: simulator
       config: *common_backend_settings
+      plugin_config:
+        # Comment out supported_gates below to disable gate-name validation entirely.
+        supported_gates: [x, sx, rz, cx, measure, barrier, delay]
     # QubexBackend settings
     qubex:
       _target_: device_gateway.plugins.qubex.backend.QubexBackend
       device_type: QPU
       config: *common_backend_settings
-      qubex_config:
+      plugin_config:
         chip_id: ${CHIP_ID, 64Q}
         config_dir: ${CONFIG_DIR, "/app/qubex-config/{chip_id}/config"}
         params_dir: ${PARAMS_DIR, "/app/qubex-config/{chip_id}/params"}
