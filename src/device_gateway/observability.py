@@ -1,6 +1,7 @@
 """OTel observability helpers for device-gateway.
 
-When ``MONITORING_ENABLED=true``, registers a ``SpanProcessor`` that copies
+When ``monitoring.enabled`` is true in the service config, registers a
+``SpanProcessor`` that copies
 ``oqtopus.*`` baggage entries onto every span as attributes. The baggage is
 attached upstream by oqtopus-engine when it opens the per-job root span, so
 this enrichment makes TraceQL lookups like ``{ .oqtopus.job_id = "..." }``
@@ -14,8 +15,7 @@ this module does not configure exporters or the SDK.
 from __future__ import annotations
 
 import logging
-import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from opentelemetry import baggage, context, trace
 from opentelemetry.sdk.trace import SpanProcessor
@@ -39,12 +39,12 @@ class JobBaggageSpanProcessor(SpanProcessor):
         ctx = parent_context if parent_context is not None else context.get_current()
         for key, value in baggage.get_all(ctx).items():
             if key.startswith(_BAGGAGE_PREFIX) and value is not None:
-                span.set_attribute(key, value)
+                span.set_attribute(key, value)  # type: ignore[arg-type]
 
 
-def setup_observability() -> None:
-    """Register ``JobBaggageSpanProcessor`` when ``MONITORING_ENABLED=true``."""
-    if os.environ.get("MONITORING_ENABLED", "false").lower() != "true":
+def setup_observability(config: dict[str, Any]) -> None:
+    """Register ``JobBaggageSpanProcessor`` when ``monitoring.enabled`` is true."""
+    if not config.get("monitoring", {}).get("enabled", False):
         return
     provider = trace.get_tracer_provider()
     add_span_processor = getattr(provider, "add_span_processor", None)

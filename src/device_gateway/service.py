@@ -87,7 +87,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         Returns:
             CallJobResponse containing execution results or error.
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
         job_id = request.job_id
         logger.info(f"CallJob is started. job_id={job_id}")
 
@@ -106,7 +106,9 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                         f"CallJob. job_id={job_id}, device is inactive. "
                         "Please check the device status."
                     )
-                    span.set_attribute("device_gateway.call_job.status", "device_inactive")
+                    span.set_attribute(
+                        "device_gateway.call_job.status", "device_inactive"
+                    )
                     span.set_status(trace.StatusCode.ERROR, "device inactive")
                     return self._create_error_response(ERROR_DEVICE_INACTIVE)
 
@@ -119,7 +121,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                     status=qpu_pb2.JobStatus.JOB_STATUS_SUCCESS,  # type: ignore[attr-defined]
                     result=result,
                 )
-                span.set_attribute("device_gateway.call_job.status", "success")
+                span.set_attribute("device_gateway.call_job.status", "succeeded")
                 span.set_attribute(
                     "device_gateway.result.num_outcomes", len(counts or {})
                 )
@@ -130,11 +132,11 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                     exc_info=True,
                 )
                 response = self._create_error_response(ERROR_INTERNAL_SERVER)
-                span.set_attribute("device_gateway.call_job.status", "failure")
+                span.set_attribute("device_gateway.call_job.status", "failed")
                 span.set_status(trace.StatusCode.ERROR, "call_job failed")
 
             finally:
-                elapsed_time = time.time() - start_time
+                elapsed_time = time.perf_counter() - start_time
                 logger.info(
                     f"CallJob is finished. elapsed_time_sec={elapsed_time:.3f}, job_id={job_id}, status={response.status}"
                 )
@@ -231,7 +233,7 @@ def serve(config_yaml_path: str, logging_yaml_path: str):
 
     config_yaml = load_config(config_yaml_path)
 
-    setup_observability()
+    setup_observability(config_yaml)
 
     max_workers = config_yaml["proto"].get("max_workers", 10)
     address = config_yaml["proto"].get("address", "localhost:51021")

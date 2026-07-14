@@ -1,3 +1,6 @@
+monitoring:
+  enabled: ${MONITORING_ENABLED, false}
+
 # gRPC settings
 proto:
   max_workers: 2

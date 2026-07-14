@@ -239,23 +239,40 @@ class BaseBackend(metaclass=ABCMeta):
             The counts are in the format {"000": 512, "111": 512}.
 
         """
+        qc = self._parse_program(program)
+        compiled_circuit = self._compile_circuit(qc)
+        counts = self._run_circuit(compiled_circuit, shots)
+        counts = self._post_process(counts)
+        logger.info(f"counts={counts}")
+
+        return counts, SUCCESS_MESSAGE
+
+    def _parse_program(self, program: str) -> Any:
+        """Parse an OpenQASM 3 program into a circuit."""
         with tracer.start_as_current_span("device_gateway.execute.qasm_parse") as span:
             qc = loads(program)
             span.set_attribute("device_gateway.circuit.num_qubits", qc.num_qubits)
             span.set_attribute("device_gateway.circuit.num_clbits", qc.num_clbits)
             span.set_attribute("device_gateway.circuit.depth", qc.depth())
+            return qc
 
+    def _compile_circuit(self, qc: Any) -> Any:
+        """Compile the parsed circuit for the backend."""
         with tracer.start_as_current_span("device_gateway.execute.compile"):
             circuit = self._get_circuit()
-            compiled_circuit = circuit.compile(qc)
+            return circuit.compile(qc)
 
+    def _run_circuit(self, compiled_circuit: Any, shots: int) -> dict:
+        """Run the compiled circuit on the backend."""
         with tracer.start_as_current_span("device_gateway.execute.run") as span:
             span.set_attribute("device_gateway.shots", shots)
-            counts = self._execute(compiled_circuit, shots=shots)
+            return self._execute(compiled_circuit, shots=shots)
 
-        with tracer.start_as_current_span("device_gateway.execute.post_process") as span:
+    def _post_process(self, counts: dict[str, int]) -> dict[str, int]:
+        """Clean up raw counts for the response."""
+        with tracer.start_as_current_span(
+            "device_gateway.execute.post_process"
+        ) as span:
             counts = self._remove_zero_values(counts)
             span.set_attribute("device_gateway.result.num_outcomes", len(counts))
-        logger.info(f"counts={counts}")
-
-        return counts, SUCCESS_MESSAGE
+            return counts
