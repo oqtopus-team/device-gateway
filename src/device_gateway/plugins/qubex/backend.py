@@ -7,7 +7,7 @@ from qubex.measurement.measurement_defaults import DEFAULT_INTERVAL, DEFAULT_SHO
 from qubex.pulse import PulseSchedule
 from qubex.version import get_version
 
-from device_gateway.core.base_backend import SUCCESS_MESSAGE, BaseBackend
+from device_gateway.core.base_backend import BaseBackend
 from device_gateway.plugins.qubex.circuit import QubexCircuit
 
 logger = logging.getLogger("device_gateway")
@@ -133,12 +133,7 @@ class QubexBackend(BaseBackend):
             logger.info("Performing readout calibration")
             self._readout_calibration()
             self._execute_readout_calibration = False
-        qc = self._parse_program(program)
-        compiled_circuit = self._compile_circuit(qc)
-        counts = self._run_circuit(compiled_circuit, shots)
-        counts = self._post_process(counts)
-        logger.info(f"counts={counts}")
-        return counts, SUCCESS_MESSAGE
+        return super().execute(program, shots=shots)
 
     def qubex_error_mitigation(
         self,
