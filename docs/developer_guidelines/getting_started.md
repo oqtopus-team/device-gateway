@@ -148,6 +148,34 @@ make docs-build
 make docs-serve
 ```
 
+## Backend Plugins
+
+Device Gateway executes circuits through pluggable backends. A backend can be any importable Python class,
+instantiated by the `_target_` fully-qualified class path declared in `backend_di_container.registry` in
+`config.yaml`. The DI container (from [oqtopus-util](https://oqtopus-util.readthedocs.io/)) simply imports and
+constructs whatever class `_target_` points to.
+
+A backend is a class that subclasses `device_gateway.core.base_backend.BaseBackend` and implements a single
+required method:
+
+```python
+def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
+    ...
+```
+
+`execute()` is fully responsible for parsing the incoming program, compiling it to the backend's native
+representation, running it, and returning `(counts, message)`. `BaseBackend` itself only provides shared,
+backend-agnostic functionality (device topology/status loading, qubit label <-> index mapping, gate-name
+validation via the optional `supported_gates` config key); it does not prescribe how a backend parses programs
+or represents circuits internally.
+
+### Backends included with this repository
+
+| Backend | `_target_`                                            | Device type | Notes                                                                     |
+| ------- | ----------------------------------------------------- | ----------- | ------------------------------------------------------------------------- |
+| Qulacs  | `device_gateway.plugins.qulacs.backend.QulacsBackend` | `simulator` | State-vector simulator.                                                   |
+| Qubex   | `device_gateway.plugins.qubex.backend.QubexBackend`   | `QPU`       | Controls real superconducting hardware via the `qubex` library.           |
+
 ## Configuration
 
 ### Configuration File
@@ -173,7 +201,8 @@ The configuration file contains the following sections:
     - `max_shots`: The maximum number of shots supported by the device.
   - `device_status_path`: The path to the device status file.
   - `device_topology_json_path`: The path to the device topology JSON file.
-- `default_backend`: The backend to use. Available options are `"qulacs"` and `"qubex"`.
+  - `supported_gates`: The list of OpenQASM3 instruction names the backend's compiler is allowed to execute (e.g. `[x, sx, rz, cx, measure, barrier, delay]`). Optional — comment it out to disable gate-name validation entirely and allow any instruction the compiler recognizes.
+- `default_backend`: The backend to use. Available options are `"qulacs"` and `"qubex"`. Required.
 - `backend_di_container`: The dependency injection container configuration for backends.
   - `registry`: The registry of available backends. Each entry has the following fields:
     - `_target_`: The fully qualified class name of the backend.
@@ -198,6 +227,8 @@ common_backend_settings: &common_backend_settings
     max_shots: 10000
   device_status_path: config/device_status
   device_topology_json_path: config/device_topology_sim.json
+  # Comment out supported_gates below to disable gate-name validation entirely.
+  supported_gates: [x, sx, rz, cx, measure, barrier, delay]
 
 # Backend configuration
 default_backend: qulacs  # Available options: "qulacs", "qubex"
@@ -210,6 +241,16 @@ backend_di_container:
       _target_: device_gateway.plugins.qulacs.backend.QulacsBackend
       device_type: simulator
       config: *common_backend_settings
+    # QubexBackend settings
+    qubex:
+      _target_: device_gateway.plugins.qubex.backend.QubexBackend
+      device_type: QPU
+      config: *common_backend_settings
+      qubex_config:
+        chip_id: ${CHIP_ID, 64Q}
+        config_dir: ${CONFIG_DIR, "/app/qubex-config/{chip_id}/config"}
+        params_dir: ${PARAMS_DIR, "/app/qubex-config/{chip_id}/params"}
+        calib_note_path: ${CALIB_NOTE_PATH, "/app/qubex-config/{chip_id}/calibration/calib_note.json"}
 ```
 
 ### QPU Example
@@ -223,12 +264,14 @@ proto:
 # Common backend settings
 common_backend_settings: &common_backend_settings
   device_info:
-    # device_id: "anemone"
+    # device_id: "qulacs"
     provider_id: "oqtopus"
-    # max_qubits: 64
+    # max_qubits: 16
     max_shots: 10000
   device_status_path: config/device_status
-  device_topology_json_path: config/device_topology.json
+  device_topology_json_path: config/device_topology_sim.json
+  # Comment out supported_gates below to disable gate-name validation entirely.
+  supported_gates: [x, sx, rz, cx, measure, barrier, delay]
 
 # Backend configuration
 default_backend: qubex  # Available options: "qulacs", "qubex"
@@ -236,6 +279,11 @@ default_backend: qubex  # Available options: "qulacs", "qubex"
 # Dependency Injection Container Configuration
 backend_di_container:
   registry:
+    # QulacsBackend settings
+    qulacs:
+      _target_: device_gateway.plugins.qulacs.backend.QulacsBackend
+      device_type: simulator
+      config: *common_backend_settings
     # QubexBackend settings
     qubex:
       _target_: device_gateway.plugins.qubex.backend.QubexBackend
