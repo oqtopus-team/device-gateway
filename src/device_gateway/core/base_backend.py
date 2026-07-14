@@ -2,7 +2,7 @@ import json
 import logging
 from abc import ABCMeta, abstractmethod
 
-logger = logging.getLogger("device_gateway")
+logger = logging.getLogger(__name__)
 
 # Constants
 SUCCESS_MESSAGE = "job is succeeded"

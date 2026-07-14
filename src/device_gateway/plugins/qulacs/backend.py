@@ -8,7 +8,7 @@ from qulacs import QuantumState
 from device_gateway.core.base_backend import SUCCESS_MESSAGE, BaseBackend
 from device_gateway.plugins.qulacs.compiler import QulacsCompiler
 
-logger = logging.getLogger("device_gateway")
+logger = logging.getLogger(__name__)
 
 
 class QulacsBackend(BaseBackend):

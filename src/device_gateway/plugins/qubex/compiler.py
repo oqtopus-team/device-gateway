@@ -7,7 +7,7 @@ from qubex.pulse import Blank, PulseSchedule, VirtualZ
 if TYPE_CHECKING:
     from device_gateway.plugins.qubex.backend import QubexBackend
 
-logger = logging.getLogger("device_gateway")
+logger = logging.getLogger(__name__)
 
 # Qubex only ever drives pulses for this fixed native gate set, so unlike Qulacs
 # it is not configurable via supported_gates in config.yaml.
