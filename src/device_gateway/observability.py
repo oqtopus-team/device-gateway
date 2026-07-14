@@ -44,7 +44,7 @@ class JobBaggageSpanProcessor(SpanProcessor):
 
 def setup_observability(config: dict[str, Any]) -> None:
     """Register ``JobBaggageSpanProcessor`` when ``monitoring.enabled`` is true."""
-    if not config.get("monitoring", {}).get("enabled", False):
+    if not (config.get("monitoring") or {}).get("enabled", False):
         return
     provider = trace.get_tracer_provider()
     add_span_processor = getattr(provider, "add_span_processor", None)
