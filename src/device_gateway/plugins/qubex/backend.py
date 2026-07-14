@@ -9,20 +9,20 @@ from qubex.pulse import PulseSchedule
 from qubex.version import get_version
 
 from device_gateway.core.base_backend import SUCCESS_MESSAGE, BaseBackend
-from device_gateway.plugins.qubex.circuit import QubexCircuit
+from device_gateway.plugins.qubex.compiler import QubexCompiler
 
 logger = logging.getLogger("device_gateway")
 
 
 class QubexBackend(BaseBackend):
-    def __init__(self, device_type: str, config: dict, qubex_config: dict):
-        super().__init__(device_type, config)
+    def __init__(self, device_type: str, config: dict, plugin_config: dict):
+        super().__init__(device_type, config, plugin_config)
         logger.info(f"Qubex version: {get_version()}")
-        chip_id = qubex_config["chip_id"]
+        chip_id = plugin_config["chip_id"]
         context = {"chip_id": chip_id}
-        config_dir = qubex_config["config_dir"].format_map(context)
-        params_dir = qubex_config["params_dir"].format_map(context)
-        calib_note_path = qubex_config["calib_note_path"].format_map(context)
+        config_dir = plugin_config["config_dir"].format_map(context)
+        params_dir = plugin_config["params_dir"].format_map(context)
+        calib_note_path = plugin_config["calib_note_path"].format_map(context)
         self._execute_readout_calibration = True
         self.classical_registers: list[str] = []
         self._experiment = Experiment(
@@ -32,6 +32,7 @@ class QubexBackend(BaseBackend):
             params_dir=params_dir,
             calib_note_path=calib_note_path,
         )
+        self._compiler = QubexCompiler(self)
         logger.info(f"Qubex version: {get_version()}")
 
     @property
@@ -40,7 +41,7 @@ class QubexBackend(BaseBackend):
         Returns the physical index to physical label mapping.
         The mapping is in the format physical_map: {'qubits': {0: 'Q29', 1: 'Q30', 2: 'Q31'}, 'couplings': {(2, 0): ('Q31', 'Q29'), (2, 1): ('Q31', 'Q30')}}"}
         """
-        device_topology = self.load_device_topology()
+        device_topology = self.device_topology
         qubits = {
             qubit[
                 "id"
@@ -107,9 +108,6 @@ class QubexBackend(BaseBackend):
             device_topology["qubits"][id] = qubit_info
         self.save_device_topology(device_topology)
 
-    def _get_circuit(self) -> QubexCircuit:
-        return QubexCircuit(self)
-
     def _execute(self, circuit: PulseSchedule, shots: int = DEFAULT_SHOTS):
         """
         Execute the compiled circuit for a specified number of shots.
@@ -135,10 +133,9 @@ class QubexBackend(BaseBackend):
             self._readout_calibration()
             self._execute_readout_calibration = False
         qc = loads(program)
-        circuit = self._get_circuit()
-        compiled_circuit = circuit.compile(qc)
+        compiled_circuit = self._compiler.compile(qc)
         counts = self._execute(compiled_circuit, shots=shots)
-        counts = self._remove_zero_values(counts)
+        counts = {k: v for k, v in counts.items() if v != 0}
         logger.info(f"counts={counts}")
         return counts, SUCCESS_MESSAGE
 

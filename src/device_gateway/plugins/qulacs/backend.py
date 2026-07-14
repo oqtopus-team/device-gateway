@@ -6,17 +6,24 @@ from qulacs import QuantumCircuit as QulacsQuantumCircuit
 from qulacs import QuantumState
 
 from device_gateway.core.base_backend import SUCCESS_MESSAGE, BaseBackend
-from device_gateway.plugins.qulacs.circuit import QulacsCircuit
+from device_gateway.plugins.qulacs.compiler import QulacsCompiler
 
 logger = logging.getLogger("device_gateway")
 
 
 class QulacsBackend(BaseBackend):
-    def __init__(self, device_type: str, config: dict):
-        super().__init__(device_type, config)
-
-    def _get_circuit(self) -> QulacsCircuit:
-        return QulacsCircuit(self)
+    def __init__(
+        self, device_type: str, config: dict, plugin_config: dict | None = None
+    ):
+        super().__init__(device_type, config, plugin_config)
+        # supported_gates is optional: when present, only those instruction names may
+        # be compiled; when absent, QulacsCompiler performs no gate-name validation.
+        self.supported_gates = (
+            set(self.plugin_config["supported_gates"])
+            if "supported_gates" in self.plugin_config
+            else None
+        )
+        self._compiler = QulacsCompiler(self)
 
     def _execute(self, circuit: QulacsQuantumCircuit, shots: int = 1024) -> dict:
         """
@@ -58,20 +65,19 @@ class QulacsBackend(BaseBackend):
         return dict(result)
 
     def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
-        qc = loads(program)
-        circuit = self._get_circuit()
-        compiled_circuit = circuit.compile(qc)
-        counts = self._execute(compiled_circuit, shots=shots)
-        counts = self._remove_zero_values(counts)
+        qiskit_circuit = loads(program)
+        qulacs_circuit = self._compiler.compile(qiskit_circuit)
+        counts = self._execute(qulacs_circuit, shots=shots)
+        counts = {k: v for k, v in counts.items() if v != 0}
 
         measure_map = {}
-        for instruction in qc.data:
+        for instruction in qiskit_circuit.data:
             if instruction.name == "measure":
-                qubit_index = qc.find_bit(instruction.qubits[0])[0]
-                clbit_index = qc.find_bit(instruction.clbits[0])[0]
+                qubit_index = qiskit_circuit.find_bit(instruction.qubits[0])[0]
+                clbit_index = qiskit_circuit.find_bit(instruction.clbits[0])[0]
                 measure_map[clbit_index] = qubit_index
 
-        bit_count = len(qc.clbits)
+        bit_count = len(qiskit_circuit.clbits)
         counts = self._remap_counts(counts, measure_map, bit_count)
         logger.info(f"counts={counts}")
 
