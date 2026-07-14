@@ -1,7 +1,6 @@
 import logging
 from collections import Counter
 
-from qiskit.qasm3 import loads
 from qulacs import QuantumCircuit as QulacsQuantumCircuit
 from qulacs import QuantumState
 
@@ -58,11 +57,10 @@ class QulacsBackend(BaseBackend):
         return dict(result)
 
     def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
-        qc = loads(program)
-        circuit = self._get_circuit()
-        compiled_circuit = circuit.compile(qc)
-        counts = self._execute(compiled_circuit, shots=shots)
-        counts = self._remove_zero_values(counts)
+        qc = self._parse_program(program)
+        compiled_circuit = self._compile_circuit(qc)
+        counts = self._run_circuit(compiled_circuit, shots)
+        counts = self._post_process(counts)
 
         measure_map = {}
         for instruction in qc.data:

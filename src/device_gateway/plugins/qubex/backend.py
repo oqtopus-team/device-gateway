@@ -1,7 +1,6 @@
 import logging
 
 import numpy as np
-from qiskit.qasm3 import loads
 from qiskit.result import Counts, LocalReadoutMitigator, ProbDistribution
 from qubex.experiment import Experiment
 from qubex.measurement.measurement_defaults import DEFAULT_INTERVAL, DEFAULT_SHOTS
@@ -134,11 +133,10 @@ class QubexBackend(BaseBackend):
             logger.info("Performing readout calibration")
             self._readout_calibration()
             self._execute_readout_calibration = False
-        qc = loads(program)
-        circuit = self._get_circuit()
-        compiled_circuit = circuit.compile(qc)
-        counts = self._execute(compiled_circuit, shots=shots)
-        counts = self._remove_zero_values(counts)
+        qc = self._parse_program(program)
+        compiled_circuit = self._compile_circuit(qc)
+        counts = self._run_circuit(compiled_circuit, shots)
+        counts = self._post_process(counts)
         logger.info(f"counts={counts}")
         return counts, SUCCESS_MESSAGE
 
