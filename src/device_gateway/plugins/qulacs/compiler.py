@@ -7,7 +7,7 @@ from qulacs import QuantumCircuit as QulacsQuantumCircuit
 if TYPE_CHECKING:
     from device_gateway.plugins.qulacs.backend import QulacsBackend
 
-logger = logging.getLogger("device_gateway")
+logger = logging.getLogger(__name__)
 
 # Single-qubit gates with no parameters: Qiskit instruction name -> QulacsQuantumCircuit method name
 _SINGLE_QUBIT_GATES = {
