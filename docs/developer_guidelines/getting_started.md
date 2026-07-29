@@ -259,6 +259,8 @@ backend_di_container:
         config_dir: ${CONFIG_DIR, "/app/qubex-config/{chip_id}/config"}
         params_dir: ${PARAMS_DIR, "/app/qubex-config/{chip_id}/params"}
         calib_note_path: ${CALIB_NOTE_PATH, "/app/qubex-config/{chip_id}/calibration/calib_note.json"}
+        configuration_mode: ${CONFIGURATION_MODE, "ge-cr-cr"}  # Options: "ge-cr-cr", "ge-ef-cr"
+        shot_interval: ${SHOT_INTERVAL, 307200}  # Interval between shots in ns
 ```
 
 ### QPU Example
@@ -303,4 +305,11 @@ backend_di_container:
         config_dir: ${CONFIG_DIR, "/app/qubex-config/{chip_id}/config"}
         params_dir: ${PARAMS_DIR, "/app/qubex-config/{chip_id}/params"}
         calib_note_path: ${CALIB_NOTE_PATH, "/app/qubex-config/{chip_id}/calibration/calib_note.json"}
+        configuration_mode: ${CONFIGURATION_MODE, "ge-cr-cr"}  # Options: "ge-cr-cr", "ge-ef-cr"
+        shot_interval: ${SHOT_INTERVAL, 307200}  # Interval between shots in ns
 ```
+
+`configuration_mode` selects the Qubex pulse configuration (`ge-cr-cr` or
+`ge-ef-cr`). `shot_interval` sets the interval between shots in nanoseconds.
+Both settings can be overridden with the `CONFIGURATION_MODE` and
+`SHOT_INTERVAL` environment variables.
