@@ -23,7 +23,9 @@ class QubexBackend(BaseBackend):
         config_dir = plugin_config["config_dir"].format_map(context)
         params_dir = plugin_config["params_dir"].format_map(context)
         calib_note_path = plugin_config["calib_note_path"].format_map(context)
-        self._shot_interval = plugin_config["shot_interval"]
+        configuration_mode = plugin_config["configuration_mode"]
+        shot_interval = plugin_config["shot_interval"]
+        self._shot_interval = shot_interval
         self._execute_readout_calibration = True
         self.classical_registers: list[str] = []
         self._experiment = Experiment(
@@ -32,7 +34,7 @@ class QubexBackend(BaseBackend):
             config_dir=config_dir,
             params_dir=params_dir,
             calib_note_path=calib_note_path,
-            configuration_mode=plugin_config["configuration_mode"],
+            configuration_mode=configuration_mode,
         )
         self._compiler = QubexCompiler(self)
 
