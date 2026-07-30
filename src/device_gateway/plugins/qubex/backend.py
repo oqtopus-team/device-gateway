@@ -4,7 +4,7 @@ import numpy as np
 from qiskit.qasm3 import loads
 from qiskit.result import Counts, LocalReadoutMitigator, ProbDistribution
 from qubex.experiment import Experiment
-from qubex.measurement.measurement_defaults import DEFAULT_INTERVAL, DEFAULT_SHOTS
+from qubex.measurement.measurement_defaults import DEFAULT_SHOTS
 from qubex.pulse import PulseSchedule
 from qubex.version import get_version
 
@@ -23,6 +23,9 @@ class QubexBackend(BaseBackend):
         config_dir = plugin_config["config_dir"].format_map(context)
         params_dir = plugin_config["params_dir"].format_map(context)
         calib_note_path = plugin_config["calib_note_path"].format_map(context)
+        configuration_mode = plugin_config["configuration_mode"]
+        shot_interval = plugin_config["shot_interval"]
+        self._shot_interval = shot_interval
         self._execute_readout_calibration = True
         self.classical_registers: list[str] = []
         self._experiment = Experiment(
@@ -31,9 +34,9 @@ class QubexBackend(BaseBackend):
             config_dir=config_dir,
             params_dir=params_dir,
             calib_note_path=calib_note_path,
+            configuration_mode=configuration_mode,
         )
         self._compiler = QubexCompiler(self)
-        logger.info(f"Qubex version: {get_version()}")
 
     @property
     def physical_map(self):
@@ -71,7 +74,9 @@ class QubexBackend(BaseBackend):
         note = {}
         for qubit in self.qubits:
             logger.info(f"Building classifier for qubit {qubit}")
-            res = self._experiment.build_classifier(targets=qubit, plot=False)
+            res = self._experiment.build_classifier(
+                targets=qubit, plot=False, shot_interval=self._shot_interval
+            )
             note[qubit] = {
                 "p0m1": 1 - res["readout_fidelities"][qubit][0],
                 "p1m0": 1 - res["readout_fidelities"][qubit][1],
@@ -117,8 +122,8 @@ class QubexBackend(BaseBackend):
         return self._experiment.measure(
             circuit,
             mode="single",
-            shots=shots,
-            interval=DEFAULT_INTERVAL,
+            n_shots=shots,
+            shot_interval=self._shot_interval,
             reset_awg_and_capunits=True,
         ).get_counts(targets=self.classical_registers)
 

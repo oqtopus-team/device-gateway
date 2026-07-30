@@ -28,6 +28,8 @@ services:
       - CONFIG_DIR=/app/qubex_config
       - PARAMS_DIR=/app/qubex_config
       - CALIB_NOTE_PATH=/app/qubex_config/calib_note.json
+      - CONFIGURATION_MODE=${CONFIGURATION_MODE:-ge-cr-cr}
+      - SHOT_INTERVAL=${SHOT_INTERVAL:-307200}
     ports:
       - "51021:51021"
     restart: unless-stopped
