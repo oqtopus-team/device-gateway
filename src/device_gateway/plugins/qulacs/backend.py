@@ -2,6 +2,7 @@ import logging
 from collections import Counter
 
 from opentelemetry import trace
+from qiskit.qasm3 import loads
 from qulacs import QuantumCircuit as QulacsQuantumCircuit
 from qulacs import QuantumState
 
@@ -66,7 +67,15 @@ class QulacsBackend(BaseBackend):
         return dict(result)
 
     def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
-        qiskit_circuit = self._parse_program(program)
+        with tracer.start_as_current_span("device_gateway.execute.qasm_parse") as span:
+            qiskit_circuit = loads(program)
+            span.set_attribute(
+                "device_gateway.circuit.num_qubits", qiskit_circuit.num_qubits
+            )
+            span.set_attribute(
+                "device_gateway.circuit.num_clbits", qiskit_circuit.num_clbits
+            )
+            span.set_attribute("device_gateway.circuit.depth", qiskit_circuit.depth())
         with tracer.start_as_current_span("device_gateway.execute.compile"):
             qulacs_circuit = self._compiler.compile(qiskit_circuit)
         with tracer.start_as_current_span("device_gateway.execute.run") as span:

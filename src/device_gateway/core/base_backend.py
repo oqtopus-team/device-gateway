@@ -1,13 +1,8 @@
 import json
 import logging
 from abc import ABCMeta, abstractmethod
-from typing import Any
-
-from opentelemetry import trace
-from qiskit.qasm3 import loads
 
 logger = logging.getLogger(__name__)
-tracer = trace.get_tracer(__name__)
 
 # Constants
 SUCCESS_MESSAGE = "job is succeeded"
@@ -211,18 +206,6 @@ class BaseBackend(metaclass=ABCMeta):
         Returns the physical index corresponding to the physical label.
         """
         return self.physical_label_to_physical_index[physical_label]
-
-    def _parse_program(self, program: str) -> Any:
-        """Parse an OpenQASM 3 program into a Qiskit circuit inside a span.
-
-        Provided here so every backend reports the same circuit size attributes.
-        """
-        with tracer.start_as_current_span("device_gateway.execute.qasm_parse") as span:
-            qc = loads(program)
-            span.set_attribute("device_gateway.circuit.num_qubits", qc.num_qubits)
-            span.set_attribute("device_gateway.circuit.num_clbits", qc.num_clbits)
-            span.set_attribute("device_gateway.circuit.depth", qc.depth())
-            return qc
 
     @abstractmethod
     def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:

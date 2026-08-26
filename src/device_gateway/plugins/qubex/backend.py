@@ -2,6 +2,7 @@ import logging
 
 import numpy as np
 from opentelemetry import trace
+from qiskit.qasm3 import loads
 from qiskit.result import Counts, LocalReadoutMitigator, ProbDistribution
 from qubex.experiment import Experiment
 from qubex.measurement.measurement_defaults import DEFAULT_SHOTS
@@ -138,7 +139,11 @@ class QubexBackend(BaseBackend):
             logger.info("Performing readout calibration")
             self._readout_calibration()
             self._execute_readout_calibration = False
-        qc = self._parse_program(program)
+        with tracer.start_as_current_span("device_gateway.execute.qasm_parse") as span:
+            qc = loads(program)
+            span.set_attribute("device_gateway.circuit.num_qubits", qc.num_qubits)
+            span.set_attribute("device_gateway.circuit.num_clbits", qc.num_clbits)
+            span.set_attribute("device_gateway.circuit.depth", qc.depth())
         with tracer.start_as_current_span("device_gateway.execute.compile"):
             compiled_circuit = self._compiler.compile(qc)
         with tracer.start_as_current_span("device_gateway.execute.run") as span:
