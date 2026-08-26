@@ -6,7 +6,7 @@ from typing import Any
 from opentelemetry import trace
 from qiskit.qasm3 import loads
 
-logger = logging.getLogger("device_gateway")
+logger = logging.getLogger(__name__)
 tracer = trace.get_tracer(__name__)
 
 # Constants
@@ -17,22 +17,42 @@ class BaseBackend(metaclass=ABCMeta):
     """
     BaseBackend handles the execution of a compiled circuit on quantum hardware.
     It no longer provides gate-level operations.
+
+    Device topology loading and caching:
+        - `load_device_topology()` always reads the topology JSON file from disk and
+          overwrites the cache with the result. Call it directly when fresh/live data
+          is required (e.g. to reflect a calibration update just written to disk).
+        - The `device_topology` property, and everything derived from it (`physical_map`,
+          `qubits`, `couplings`, `physical_index_to_physical_label`, etc.), returns the
+          cached value and only reads from disk on first access.
     """
 
-    def __init__(self, device_type: str, config: dict):
+    def __init__(
+        self, device_type: str, config: dict, plugin_config: dict | None = None
+    ):
         """
         Initialize the backend with the configuration.
         This is done once at server startup.
+
+        Args:
+            device_type: The device type ("simulator" or "QPU").
+            config: Settings shared across all backends (device_info, device_status_path,
+                device_topology_json_path, ...).
+            plugin_config: Settings specific to this backend.
         """
         self.device_type = device_type
         self.config = config
+        self.plugin_config = plugin_config or {}
+        self._device_topology_cache: dict | None = None
 
-    def load_device_topology(self):
+    def load_device_topology(self) -> dict:
         """
-        Load the device topology from a JSON file.
+        Load the device topology from a JSON file, refreshing the cache
+        used by the device_topology property.
         """
         with open(self.config["device_topology_json_path"]) as f:
             device_topology = json.load(f)
+        self._device_topology_cache = device_topology
         return device_topology
 
     def load_device_status(self):
@@ -80,9 +100,13 @@ class BaseBackend(metaclass=ABCMeta):
     @property
     def device_topology(self) -> dict:
         """
-        Returns the device topology, e.g., {"qubits": [{"id": 0, "physical_id": 5}], "couplings": [{"control": 0, "target": 1}]}
+        Returns the cached device topology, loading it on first access.
+        e.g., {"qubits": [{"id": 0, "physical_id": 5}], "couplings": [{"control": 0, "target": 1}]}
+        Call load_device_topology() directly to force a fresh read from disk.
         """
-        return self.load_device_topology()
+        if self._device_topology_cache is None:
+            return self.load_device_topology()
+        return self._device_topology_cache
 
     @property
     def physical_ids(self) -> list:
@@ -130,7 +154,7 @@ class BaseBackend(metaclass=ABCMeta):
         Returns the physical index to physical label mapping.
         The mapping is in the format physical_map: {'qubits': {0: 'Q29', 1: 'Q30', 2: 'Q31'}, 'couplings': {(2, 0): ('Q31', 'Q29'), (2, 1): ('Q31', 'Q30')}}"}
         """
-        device_topology = self.load_device_topology()
+        device_topology = self.device_topology
         qubits = {
             qubit["id"]: f"Q{qubit['physical_id']:02}"
             for qubit in device_topology["qubits"]
@@ -188,67 +212,11 @@ class BaseBackend(metaclass=ABCMeta):
         """
         return self.physical_label_to_physical_index[physical_label]
 
-    @abstractmethod
-    def _get_circuit(self) -> Any:
-        """Get the circuit object for the backend.
-
-        This method should be implemented in the derived class.
-        """
-        pass
-
-    @abstractmethod
-    def _execute(self, circuit: Any, shots: int = 1024) -> dict:
-        """Execute the compiled circuit for a specified number of shots.
-
-        This method should be implemented in the derived class.
-        This method should return a dictionary with string keys and integer values,
-        where the keys are binary strings representing measurement results
-        and the values are the counts of those results.
-
-        Args:
-            circuit: The compiled circuit to be executed.
-            shots: The number of shots to execute the circuit.
-        Returns:
-            A dictionary containing the counts of measurement results,
-            e.g., {"000": 512, "111": 512}.
-
-        """
-        pass
-
-    def _remove_zero_values(self, d: dict[str, int]) -> dict[str, int]:
-        """Remove zero values from a dictionary.
-
-        Args:
-            d: Dictionary with string keys and integer values.
-        Returns:
-            Dictionary with zero values removed.
-
-        """
-        return {k: v for k, v in d.items() if v != 0}
-
-    def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
-        """Execute the circuit for a specified number of shots.
-
-        This method parses, compiles, and executes the circuit, and removes results with zero counts.
-
-        Args:
-            program: The circuit to be executed, given in OpenQASM 3 format.
-            shots: The number of shots to execute the circuit.
-        Returns:
-            A tuple containing the counts of measurement results and a success message.
-            The counts are in the format {"000": 512, "111": 512}.
-
-        """
-        qc = self._parse_program(program)
-        compiled_circuit = self._compile_circuit(qc)
-        counts = self._run_circuit(compiled_circuit, shots)
-        counts = self._post_process(counts)
-        logger.info(f"counts={counts}")
-
-        return counts, SUCCESS_MESSAGE
-
     def _parse_program(self, program: str) -> Any:
-        """Parse an OpenQASM 3 program into a circuit."""
+        """Parse an OpenQASM 3 program into a Qiskit circuit inside a span.
+
+        Provided here so every backend reports the same circuit size attributes.
+        """
         with tracer.start_as_current_span("device_gateway.execute.qasm_parse") as span:
             qc = loads(program)
             span.set_attribute("device_gateway.circuit.num_qubits", qc.num_qubits)
@@ -256,23 +224,21 @@ class BaseBackend(metaclass=ABCMeta):
             span.set_attribute("device_gateway.circuit.depth", qc.depth())
             return qc
 
-    def _compile_circuit(self, qc: Any) -> Any:
-        """Compile the parsed circuit for the backend."""
-        with tracer.start_as_current_span("device_gateway.execute.compile"):
-            circuit = self._get_circuit()
-            return circuit.compile(qc)
+    @abstractmethod
+    def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
+        """Parse, compile, execute, and format the results of the given program.
 
-    def _run_circuit(self, compiled_circuit: Any, shots: int) -> dict:
-        """Run the compiled circuit on the backend."""
-        with tracer.start_as_current_span("device_gateway.execute.run") as span:
-            span.set_attribute("device_gateway.shots", shots)
-            return self._execute(compiled_circuit, shots=shots)
+        This method should be implemented in the derived class. It is fully
+        responsible for parsing the program, compiling it to the backend's
+        native representation, executing it, and returning the measurement
+        counts with zero-count entries removed.
 
-    def _post_process(self, counts: dict[str, int]) -> dict[str, int]:
-        """Clean up raw counts for the response."""
-        with tracer.start_as_current_span(
-            "device_gateway.execute.post_process"
-        ) as span:
-            counts = self._remove_zero_values(counts)
-            span.set_attribute("device_gateway.result.num_outcomes", len(counts))
-            return counts
+        Args:
+            program: The circuit to be executed.
+            shots: The number of shots to execute the circuit.
+        Returns:
+            A tuple containing the counts of measurement results and a success message.
+            The counts are in the format {"000": 512, "111": 512}.
+
+        """
+        pass

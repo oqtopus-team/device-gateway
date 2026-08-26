@@ -18,7 +18,6 @@ tracer = trace.get_tracer(__name__)
 
 
 # Constants
-DEFAULT_BACKEND = "qulacs"
 ERROR_DEVICE_INACTIVE = "device is inactive"
 ERROR_INTERNAL_SERVER = "internal server error"
 ERROR_UNSUPPORTED_STATUS = "Service status '{}' is not supported."
@@ -50,7 +49,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         """
         registry = config["backend_di_container"]["registry"]
         self._di_container = DiContainer(registry)
-        self.backend_name = config.get("default_backend", DEFAULT_BACKEND)
+        self.backend_name = config["default_backend"]
         self.backend = self._di_container.get(self.backend_name)
 
     def _create_error_response(self, message: str) -> qpu_pb2.CallJobResponse:  # type: ignore[name-defined]
@@ -195,9 +194,10 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         Returns:
             Dictionary containing device information parameters.
         """
+        device_topology = self.backend.load_device_topology()
         parameters = self.backend.device_info.copy()
-        parameters["device_info"] = json.dumps(self.backend.device_topology)
-        parameters["calibrated_at"] = self.backend.device_topology["calibrated_at"]
+        parameters["device_info"] = json.dumps(device_topology)
+        parameters["calibrated_at"] = device_topology["calibrated_at"]
         return parameters
 
     def GetDeviceInfo(self, request: qpu_pb2.GetDeviceInfoRequest, context):  # type: ignore[name-defined]
@@ -237,7 +237,10 @@ def serve(config_yaml_path: str, logging_yaml_path: str):
 
     max_workers = config_yaml["proto"].get("max_workers", 10)
     address = config_yaml["proto"].get("address", "localhost:51021")
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers))
+    server = grpc.server(
+        futures.ThreadPoolExecutor(max_workers),
+        options=config_yaml["proto"].get("grpc_options", []),
+    )
     qpu_pb2_grpc.add_QpuServiceServicer_to_server(
         ServerImpl(config=config_yaml), server
     )

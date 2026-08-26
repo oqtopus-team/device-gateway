@@ -1,27 +1,32 @@
 import logging
 
 import numpy as np
+from opentelemetry import trace
 from qiskit.result import Counts, LocalReadoutMitigator, ProbDistribution
 from qubex.experiment import Experiment
-from qubex.measurement.measurement_defaults import DEFAULT_INTERVAL, DEFAULT_SHOTS
+from qubex.measurement.measurement_defaults import DEFAULT_SHOTS
 from qubex.pulse import PulseSchedule
 from qubex.version import get_version
 
-from device_gateway.core.base_backend import BaseBackend
-from device_gateway.plugins.qubex.circuit import QubexCircuit
+from device_gateway.core.base_backend import SUCCESS_MESSAGE, BaseBackend
+from device_gateway.plugins.qubex.compiler import QubexCompiler
 
-logger = logging.getLogger("device_gateway")
+logger = logging.getLogger(__name__)
+tracer = trace.get_tracer(__name__)
 
 
 class QubexBackend(BaseBackend):
-    def __init__(self, device_type: str, config: dict, qubex_config: dict):
-        super().__init__(device_type, config)
+    def __init__(self, device_type: str, config: dict, plugin_config: dict):
+        super().__init__(device_type, config, plugin_config)
         logger.info(f"Qubex version: {get_version()}")
-        chip_id = qubex_config["chip_id"]
+        chip_id = plugin_config["chip_id"]
         context = {"chip_id": chip_id}
-        config_dir = qubex_config["config_dir"].format_map(context)
-        params_dir = qubex_config["params_dir"].format_map(context)
-        calib_note_path = qubex_config["calib_note_path"].format_map(context)
+        config_dir = plugin_config["config_dir"].format_map(context)
+        params_dir = plugin_config["params_dir"].format_map(context)
+        calib_note_path = plugin_config["calib_note_path"].format_map(context)
+        configuration_mode = plugin_config["configuration_mode"]
+        shot_interval = plugin_config["shot_interval"]
+        self._shot_interval = shot_interval
         self._execute_readout_calibration = True
         self.classical_registers: list[str] = []
         self._experiment = Experiment(
@@ -30,8 +35,9 @@ class QubexBackend(BaseBackend):
             config_dir=config_dir,
             params_dir=params_dir,
             calib_note_path=calib_note_path,
+            configuration_mode=configuration_mode,
         )
-        logger.info(f"Qubex version: {get_version()}")
+        self._compiler = QubexCompiler(self)
 
     @property
     def physical_map(self):
@@ -39,7 +45,7 @@ class QubexBackend(BaseBackend):
         Returns the physical index to physical label mapping.
         The mapping is in the format physical_map: {'qubits': {0: 'Q29', 1: 'Q30', 2: 'Q31'}, 'couplings': {(2, 0): ('Q31', 'Q29'), (2, 1): ('Q31', 'Q30')}}"}
         """
-        device_topology = self.load_device_topology()
+        device_topology = self.device_topology
         qubits = {
             qubit[
                 "id"
@@ -69,7 +75,9 @@ class QubexBackend(BaseBackend):
         note = {}
         for qubit in self.qubits:
             logger.info(f"Building classifier for qubit {qubit}")
-            res = self._experiment.build_classifier(targets=qubit, plot=False)
+            res = self._experiment.build_classifier(
+                targets=qubit, plot=False, shot_interval=self._shot_interval
+            )
             note[qubit] = {
                 "p0m1": 1 - res["readout_fidelities"][qubit][0],
                 "p1m0": 1 - res["readout_fidelities"][qubit][1],
@@ -106,9 +114,6 @@ class QubexBackend(BaseBackend):
             device_topology["qubits"][id] = qubit_info
         self.save_device_topology(device_topology)
 
-    def _get_circuit(self) -> QubexCircuit:
-        return QubexCircuit(self)
-
     def _execute(self, circuit: PulseSchedule, shots: int = DEFAULT_SHOTS):
         """
         Execute the compiled circuit for a specified number of shots.
@@ -118,8 +123,8 @@ class QubexBackend(BaseBackend):
         return self._experiment.measure(
             circuit,
             mode="single",
-            shots=shots,
-            interval=DEFAULT_INTERVAL,
+            n_shots=shots,
+            shot_interval=self._shot_interval,
             reset_awg_and_capunits=True,
         ).get_counts(targets=self.classical_registers)
 
@@ -133,7 +138,19 @@ class QubexBackend(BaseBackend):
             logger.info("Performing readout calibration")
             self._readout_calibration()
             self._execute_readout_calibration = False
-        return super().execute(program, shots=shots)
+        qc = self._parse_program(program)
+        with tracer.start_as_current_span("device_gateway.execute.compile"):
+            compiled_circuit = self._compiler.compile(qc)
+        with tracer.start_as_current_span("device_gateway.execute.run") as span:
+            span.set_attribute("device_gateway.shots", shots)
+            counts = self._execute(compiled_circuit, shots=shots)
+        with tracer.start_as_current_span(
+            "device_gateway.execute.post_process"
+        ) as span:
+            counts = {k: v for k, v in counts.items() if v != 0}
+            span.set_attribute("device_gateway.result.num_outcomes", len(counts))
+        logger.info(f"counts={counts}")
+        return counts, SUCCESS_MESSAGE
 
     def qubex_error_mitigation(
         self,

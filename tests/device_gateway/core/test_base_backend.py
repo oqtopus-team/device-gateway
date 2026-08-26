@@ -14,6 +14,10 @@ def make_config(device_id="from_config", max_qubits=7):
     }
 
 
+def make_plugin_config():
+    return {"supported_gates": ["x", "sx", "rz", "cx", "measure", "barrier", "delay"]}
+
+
 def make_topology(device_id="from_topology", num_qubits=4):
     return {
         "device_id": device_id,
@@ -99,3 +103,74 @@ class TestDeviceInfo:
 
         assert backend.config["device_info"]["device_id"] is None
         assert backend.config["device_info"]["max_qubits"] is None
+
+
+class TestSupportedGates:
+    def test_supported_gates_is_a_set_when_configured(self, mocker):
+        mocker.patch(
+            "device_gateway.core.base_backend.BaseBackend.load_device_topology",
+            return_value=make_topology(),
+        )
+        backend = QulacsBackend("simulator", make_config(), make_plugin_config())
+
+        assert backend.supported_gates == {
+            "x",
+            "sx",
+            "rz",
+            "cx",
+            "measure",
+            "barrier",
+            "delay",
+        }
+
+    def test_supported_gates_is_none_when_plugin_config_omitted(self, mocker):
+        mocker.patch(
+            "device_gateway.core.base_backend.BaseBackend.load_device_topology",
+            return_value=make_topology(),
+        )
+        backend = QulacsBackend("simulator", make_config())
+
+        assert backend.supported_gates is None
+
+    def test_supported_gates_is_none_when_key_omitted_from_plugin_config(self, mocker):
+        mocker.patch(
+            "device_gateway.core.base_backend.BaseBackend.load_device_topology",
+            return_value=make_topology(),
+        )
+        backend = QulacsBackend("simulator", make_config(), {})
+
+        assert backend.supported_gates is None
+
+
+class TestDeviceTopologyCaching:
+    def _mock_topology_file(self, mocker, topology):
+        mocker.patch("builtins.open", mocker.mock_open())
+        return mocker.patch(
+            "device_gateway.core.base_backend.json.load", return_value=topology
+        )
+
+    def _make_config_with_topology_path(self):
+        config = make_config()
+        config["device_topology_json_path"] = "config/device_topology_sim.json"
+        return config
+
+    def test_physical_map_reuses_cache_after_first_load(self, mocker):
+        topology = {**make_topology(num_qubits=2), "couplings": []}
+        mock_json_load = self._mock_topology_file(mocker, topology)
+        backend = QulacsBackend("simulator", self._make_config_with_topology_path())
+
+        backend.physical_map
+        backend.physical_map
+        backend.qubits
+
+        assert mock_json_load.call_count == 1
+
+    def test_load_device_topology_forces_a_fresh_read(self, mocker):
+        topology = {**make_topology(num_qubits=2), "couplings": []}
+        mock_json_load = self._mock_topology_file(mocker, topology)
+        backend = QulacsBackend("simulator", self._make_config_with_topology_path())
+
+        backend.physical_map  # populates the cache
+        backend.load_device_topology()  # explicit call forces a fresh read
+
+        assert mock_json_load.call_count == 2
