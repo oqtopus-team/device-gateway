@@ -109,7 +109,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                         span.set_attribute(
                             "device_gateway.call_job.status", "device_inactive"
                         )
-                    span.set_status(trace.StatusCode.ERROR, ERROR_DEVICE_INACTIVE)
+                        span.set_status(trace.StatusCode.ERROR, ERROR_DEVICE_INACTIVE)
                     return self._create_error_response(ERROR_DEVICE_INACTIVE)
 
                 logger.info(f"program={request.program}, shots={request.shots}")
@@ -135,7 +135,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                 response = self._create_error_response(ERROR_INTERNAL_SERVER)
                 if span.is_recording():
                     span.set_attribute("device_gateway.call_job.status", "failed")
-                span.set_status(trace.StatusCode.ERROR, str(e))
+                    span.set_status(trace.StatusCode.ERROR, str(e))
 
             finally:
                 elapsed_time = time.perf_counter() - start_time
@@ -192,7 +192,8 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                     "service_status": qpu_pb2.ServiceStatus.SERVICE_STATUS_INACTIVE
                 }
                 response = qpu_pb2.GetServiceStatusResponse(**response_parameters)
-                span.set_status(trace.StatusCode.ERROR, str(e))
+                if span.is_recording():
+                    span.set_status(trace.StatusCode.ERROR, str(e))
 
             finally:
                 logger.info(
