@@ -67,36 +67,34 @@ class QulacsBackend(BaseBackend):
         return dict(result)
 
     def execute(self, program: str, shots: int = 1024) -> tuple[dict, str]:
-        with tracer.start_as_current_span("device_gateway.execute.qasm_parse") as span:
-            qiskit_circuit = loads(program)
-            span.set_attribute(
-                "device_gateway.circuit.num_qubits", qiskit_circuit.num_qubits
-            )
-            span.set_attribute(
-                "device_gateway.circuit.num_clbits", qiskit_circuit.num_clbits
-            )
-            span.set_attribute("device_gateway.circuit.depth", qiskit_circuit.depth())
-        with tracer.start_as_current_span("device_gateway.execute.compile"):
+        qiskit_circuit = loads(program)
+        with tracer.start_as_current_span("device_gateway.compile") as span:
+            if span.is_recording():
+                span.set_attribute(
+                    "device_gateway.circuit.num_qubits", qiskit_circuit.num_qubits
+                )
+                span.set_attribute(
+                    "device_gateway.circuit.num_clbits", qiskit_circuit.num_clbits
+                )
+                span.set_attribute(
+                    "device_gateway.circuit.depth", qiskit_circuit.depth()
+                )
             qulacs_circuit = self._compiler.compile(qiskit_circuit)
-        with tracer.start_as_current_span("device_gateway.execute.run") as span:
-            span.set_attribute("device_gateway.shots", shots)
+        with tracer.start_as_current_span("device_gateway._execute") as span:
+            if span.is_recording():
+                span.set_attribute("device_gateway.shots", shots)
             counts = self._execute(qulacs_circuit, shots=shots)
+        counts = {k: v for k, v in counts.items() if v != 0}
 
-        with tracer.start_as_current_span(
-            "device_gateway.execute.post_process"
-        ) as span:
-            counts = {k: v for k, v in counts.items() if v != 0}
+        measure_map = {}
+        for instruction in qiskit_circuit.data:
+            if instruction.name == "measure":
+                qubit_index = qiskit_circuit.find_bit(instruction.qubits[0])[0]
+                clbit_index = qiskit_circuit.find_bit(instruction.clbits[0])[0]
+                measure_map[clbit_index] = qubit_index
 
-            measure_map = {}
-            for instruction in qiskit_circuit.data:
-                if instruction.name == "measure":
-                    qubit_index = qiskit_circuit.find_bit(instruction.qubits[0])[0]
-                    clbit_index = qiskit_circuit.find_bit(instruction.clbits[0])[0]
-                    measure_map[clbit_index] = qubit_index
-
-            bit_count = len(qiskit_circuit.clbits)
-            counts = self._remap_counts(counts, measure_map, bit_count)
-            span.set_attribute("device_gateway.result.num_outcomes", len(counts))
+        bit_count = len(qiskit_circuit.clbits)
+        counts = self._remap_counts(counts, measure_map, bit_count)
         logger.info(f"counts={counts}")
 
         return counts, SUCCESS_MESSAGE
