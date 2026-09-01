@@ -107,7 +107,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                     )
                     if span.is_recording():
                         span.set_attribute(
-                            "device_gateway.call_job.status", "device_inactive"
+                            "device_gateway.CallJob.status", "device_inactive"
                         )
                         span.set_status(trace.StatusCode.ERROR, ERROR_DEVICE_INACTIVE)
                     return self._create_error_response(ERROR_DEVICE_INACTIVE)
@@ -122,7 +122,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                     result=result,
                 )
                 if span.is_recording():
-                    span.set_attribute("device_gateway.call_job.status", "succeeded")
+                    span.set_attribute("device_gateway.CallJob.status", "succeeded")
                     span.set_attribute(
                         "device_gateway.result.num_outcomes", len(counts or {})
                     )
@@ -134,7 +134,7 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
                 )
                 response = self._create_error_response(ERROR_INTERNAL_SERVER)
                 if span.is_recording():
-                    span.set_attribute("device_gateway.call_job.status", "failed")
+                    span.set_attribute("device_gateway.CallJob.status", "failed")
                     span.set_status(trace.StatusCode.ERROR, str(e))
 
             finally:
@@ -223,21 +223,29 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         Returns:
             GetDeviceInfoResponse containing device information.
         """
-        try:
-            logger.info("GetDeviceInfo is started.")
-            response_parameters = self._get_device_info_parameters()
-            device_info = qpu_pb2.DeviceInfo(**response_parameters)  # type: ignore[attr-defined]
-            response = qpu_pb2.GetDeviceInfoResponse(  # type: ignore[attr-defined]
-                body=device_info
-            )
+        with tracer.start_as_current_span("device_gateway.GetDeviceInfo") as span:
+            try:
+                logger.info("GetDeviceInfo is started.")
+                response_parameters = self._get_device_info_parameters()
+                device_info = qpu_pb2.DeviceInfo(**response_parameters)  # type: ignore[attr-defined]
+                response = qpu_pb2.GetDeviceInfoResponse(  # type: ignore[attr-defined]
+                    body=device_info
+                )
+                if span.is_recording():
+                    span.set_attribute(
+                        "device_gateway.calibrated_at",
+                        str(response_parameters["calibrated_at"]),
+                    )
 
-        except Exception:
-            logger.error("GetDeviceInfo. Exception occurred.", exc_info=True)
-            response = qpu_pb2.GetDeviceInfoResponse()  # type: ignore[attr-defined]
+            except Exception as e:
+                logger.error("GetDeviceInfo. Exception occurred.", exc_info=True)
+                response = qpu_pb2.GetDeviceInfoResponse()  # type: ignore[attr-defined]
+                if span.is_recording():
+                    span.set_status(trace.StatusCode.ERROR, str(e))
 
-        finally:
-            logger.info("GetDeviceInfo is finished.")
-            return response
+            finally:
+                logger.info("GetDeviceInfo is finished.")
+                return response
 
 
 def serve(config_yaml_path: str, logging_yaml_path: str):
