@@ -6,12 +6,15 @@ from concurrent import futures
 
 import grpc
 from grpc_reflection.v1alpha import reflection
+from opentelemetry import trace
 from oqtopus_util.config import load_config, setup_logging
 from oqtopus_util.di import DiContainer
 
 from device_gateway.gen.qpu.v1 import qpu_pb2, qpu_pb2_grpc
+from device_gateway.observability import setup_observability
 
 logger = logging.getLogger("device_gateway")
+tracer = trace.get_tracer("device_gateway")
 
 
 # Constants
@@ -83,39 +86,63 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         Returns:
             CallJobResponse containing execution results or error.
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
         job_id = request.job_id
         logger.info(f"CallJob is started. job_id={job_id}")
 
-        try:
-            if self.backend.is_inactive():
-                logger.error(
-                    f"CallJob. job_id={job_id}, device is inactive. "
-                    "Please check the device status."
+        with tracer.start_as_current_span(
+            "device_gateway.CallJob",
+            attributes={
+                "device_gateway.job_id": job_id,
+                "device_gateway.shots": request.shots,
+                "device_gateway.backend": self.backend_name,
+                "device_gateway.is_simulator": self.backend.is_simulator(),
+            },
+        ) as span:
+            try:
+                if self.backend.is_inactive():
+                    logger.error(
+                        f"CallJob. job_id={job_id}, device is inactive. "
+                        "Please check the device status."
+                    )
+                    if span.is_recording():
+                        span.set_attribute(
+                            "device_gateway.CallJob.status", "device_inactive"
+                        )
+                        span.set_status(trace.StatusCode.ERROR, ERROR_DEVICE_INACTIVE)
+                    return self._create_error_response(ERROR_DEVICE_INACTIVE)
+
+                logger.info(f"program={request.program}, shots={request.shots}")
+                counts, message = self.backend.execute(
+                    request.program, shots=request.shots
                 )
-                return self._create_error_response(ERROR_DEVICE_INACTIVE)
+                result = qpu_pb2.Result(counts=counts, message=message)  # type: ignore[attr-defined]
+                response = qpu_pb2.CallJobResponse(  # type: ignore[attr-defined]
+                    status=qpu_pb2.JobStatus.JOB_STATUS_SUCCESS,  # type: ignore[attr-defined]
+                    result=result,
+                )
+                if span.is_recording():
+                    span.set_attribute("device_gateway.CallJob.status", "succeeded")
+                    span.set_attribute(
+                        "device_gateway.result.num_outcomes", len(counts or {})
+                    )
 
-            logger.info(f"program={request.program}, shots={request.shots}")
-            counts, message = self.backend.execute(request.program, shots=request.shots)
-            result = qpu_pb2.Result(counts=counts, message=message)  # type: ignore[attr-defined]
-            response = qpu_pb2.CallJobResponse(  # type: ignore[attr-defined]
-                status=qpu_pb2.JobStatus.JOB_STATUS_SUCCESS,  # type: ignore[attr-defined]
-                result=result,
-            )
+            except Exception as e:
+                logger.error(
+                    f"CallJob. job_id={job_id}, Exception occurred.",
+                    exc_info=True,
+                )
+                response = self._create_error_response(ERROR_INTERNAL_SERVER)
+                if span.is_recording():
+                    span.set_attribute("device_gateway.CallJob.status", "failed")
+                    span.set_status(trace.StatusCode.ERROR, str(e))
 
-        except Exception:
-            logger.error(
-                f"CallJob. job_id={job_id}, Exception occurred.",
-                exc_info=True,
-            )
-            response = self._create_error_response(ERROR_INTERNAL_SERVER)
-
-        finally:
-            elapsed_time = time.time() - start_time
-            logger.info(
-                f"CallJob is finished. elapsed_time_sec={elapsed_time:.3f}, job_id={job_id}, status={response.status}"
-            )
-            return response
+            finally:
+                elapsed_time = time.perf_counter() - start_time
+                logger.info(
+                    f"CallJob is finished. elapsed_time_sec={elapsed_time:.3f}, job_id={job_id}, status={response.status}"
+                )
+                return response
 
     def _get_service_status(self) -> qpu_pb2.ServiceStatus:  # type: ignore[name-defined]
         """Get current service status.
@@ -147,22 +174,32 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         Returns:
             GetServiceStatusResponse containing current service status.
         """
-        try:
-            logger.info("GetServiceStatus is started.")
-            service_status = self._get_service_status()
-            response_parameters = {"service_status": service_status}
-            response = qpu_pb2.GetServiceStatusResponse(**response_parameters)
+        with tracer.start_as_current_span("device_gateway.GetServiceStatus") as span:
+            try:
+                logger.info("GetServiceStatus is started.")
+                service_status = self._get_service_status()
+                response_parameters = {"service_status": service_status}
+                response = qpu_pb2.GetServiceStatusResponse(**response_parameters)
+                if span.is_recording():
+                    span.set_attribute(
+                        "device_gateway.service_status",
+                        qpu_pb2.ServiceStatus.Name(service_status),  # type: ignore[attr-defined]
+                    )
 
-        except Exception:
-            logger.error("GetServiceStatus. Exception occurred.", exc_info=True)
-            response_parameters = {
-                "service_status": qpu_pb2.ServiceStatus.SERVICE_STATUS_INACTIVE
-            }
-            response = qpu_pb2.GetServiceStatusResponse(**response_parameters)
+            except Exception as e:
+                logger.error("GetServiceStatus. Exception occurred.", exc_info=True)
+                response_parameters = {
+                    "service_status": qpu_pb2.ServiceStatus.SERVICE_STATUS_INACTIVE
+                }
+                response = qpu_pb2.GetServiceStatusResponse(**response_parameters)
+                if span.is_recording():
+                    span.set_status(trace.StatusCode.ERROR, str(e))
 
-        finally:
-            logger.info(f"GetServiceStatus is finished. response={response_parameters}")
-            return response
+            finally:
+                logger.info(
+                    f"GetServiceStatus is finished. response={response_parameters}"
+                )
+                return response
 
     def _get_device_info_parameters(self) -> dict:
         """Get device information parameters.
@@ -186,21 +223,29 @@ class ServerImpl(qpu_pb2_grpc.QpuServiceServicer):
         Returns:
             GetDeviceInfoResponse containing device information.
         """
-        try:
-            logger.info("GetDeviceInfo is started.")
-            response_parameters = self._get_device_info_parameters()
-            device_info = qpu_pb2.DeviceInfo(**response_parameters)  # type: ignore[attr-defined]
-            response = qpu_pb2.GetDeviceInfoResponse(  # type: ignore[attr-defined]
-                body=device_info
-            )
+        with tracer.start_as_current_span("device_gateway.GetDeviceInfo") as span:
+            try:
+                logger.info("GetDeviceInfo is started.")
+                response_parameters = self._get_device_info_parameters()
+                device_info = qpu_pb2.DeviceInfo(**response_parameters)  # type: ignore[attr-defined]
+                response = qpu_pb2.GetDeviceInfoResponse(  # type: ignore[attr-defined]
+                    body=device_info
+                )
+                if span.is_recording():
+                    span.set_attribute(
+                        "device_gateway.calibrated_at",
+                        str(response_parameters["calibrated_at"]),
+                    )
 
-        except Exception:
-            logger.error("GetDeviceInfo. Exception occurred.", exc_info=True)
-            response = qpu_pb2.GetDeviceInfoResponse()  # type: ignore[attr-defined]
+            except Exception as e:
+                logger.error("GetDeviceInfo. Exception occurred.", exc_info=True)
+                response = qpu_pb2.GetDeviceInfoResponse()  # type: ignore[attr-defined]
+                if span.is_recording():
+                    span.set_status(trace.StatusCode.ERROR, str(e))
 
-        finally:
-            logger.info("GetDeviceInfo is finished.")
-            return response
+            finally:
+                logger.info("GetDeviceInfo is finished.")
+                return response
 
 
 def serve(config_yaml_path: str, logging_yaml_path: str):
@@ -208,6 +253,8 @@ def serve(config_yaml_path: str, logging_yaml_path: str):
     setup_logging(logging_cfg)
 
     config_yaml = load_config(config_yaml_path)
+
+    setup_observability(config_yaml)
 
     max_workers = config_yaml["proto"].get("max_workers", 10)
     address = config_yaml["proto"].get("address", "localhost:51021")

@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+from opentelemetry import trace
 from qiskit.qasm3 import loads
 from qiskit.result import Counts, LocalReadoutMitigator, ProbDistribution
 from qubex.experiment import Experiment
@@ -12,6 +13,7 @@ from device_gateway.core.base_backend import SUCCESS_MESSAGE, BaseBackend
 from device_gateway.plugins.qubex.compiler import QubexCompiler
 
 logger = logging.getLogger(__name__)
+tracer = trace.get_tracer(__name__)
 
 
 class QubexBackend(BaseBackend):
@@ -132,14 +134,24 @@ class QubexBackend(BaseBackend):
         The compiled_circuit is produced by the PulseSchedule class.
         """
         if self.is_active() and self._execute_readout_calibration:
-            self._experiment.connect()
+            with tracer.start_as_current_span("device_gateway.connect"):
+                self._experiment.connect()
             logger.info("Qubex experiment connect successfully")
             logger.info("Performing readout calibration")
-            self._readout_calibration()
+            with tracer.start_as_current_span("device_gateway._readout_calibration"):
+                self._readout_calibration()
             self._execute_readout_calibration = False
         qc = loads(program)
-        compiled_circuit = self._compiler.compile(qc)
-        counts = self._execute(compiled_circuit, shots=shots)
+        with tracer.start_as_current_span("device_gateway.compile") as span:
+            if span.is_recording():
+                span.set_attribute("device_gateway.circuit.num_qubits", qc.num_qubits)
+                span.set_attribute("device_gateway.circuit.num_clbits", qc.num_clbits)
+                span.set_attribute("device_gateway.circuit.depth", qc.depth())
+            compiled_circuit = self._compiler.compile(qc)
+        with tracer.start_as_current_span("device_gateway._execute") as span:
+            if span.is_recording():
+                span.set_attribute("device_gateway.shots", shots)
+            counts = self._execute(compiled_circuit, shots=shots)
         counts = {k: v for k, v in counts.items() if v != 0}
         logger.info(f"counts={counts}")
         return counts, SUCCESS_MESSAGE
