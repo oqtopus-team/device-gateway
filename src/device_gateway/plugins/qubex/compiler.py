@@ -4,22 +4,23 @@ from typing import TYPE_CHECKING
 from qiskit import QuantumCircuit as QiskitQuantumCircuit
 from qubex.pulse import Blank, PulseSchedule, VirtualZ
 
-from device_gateway.core.base_circuit import BaseCircuit
-from device_gateway.core.gate_set import SUPPORTED_GATES
-
 if TYPE_CHECKING:
     from device_gateway.plugins.qubex.backend import QubexBackend
 
-logger = logging.getLogger("device_gateway")
+logger = logging.getLogger(__name__)
+
+# Qubex only ever drives pulses for this fixed native gate set, so unlike Qulacs
+# it is not configurable via supported_gates in config.yaml.
+_SUPPORTED_GATES = {"x", "sx", "rz", "cx", "measure", "barrier", "delay"}
 
 
-class QubexCircuit(BaseCircuit):
-    """Qubex circuit implementation."""
+class QubexCompiler:
+    """Compiles a Qiskit circuit into a Qubex pulse schedule."""
 
     def __init__(self, backend: "QubexBackend"):
-        """Initialize the circuit with backend.
+        """Initialize the compiler with backend.
         Args:
-            backend: Backend to execute the circuit on
+            backend: Backend to compile the circuit for
         """
         self._backend = backend
 
@@ -132,7 +133,7 @@ class QubexCircuit(BaseCircuit):
 
         for instruction in qc.data:
             name = instruction.name
-            if name not in SUPPORTED_GATES:
+            if name not in _SUPPORTED_GATES:
                 logger.error(f"Unsupported instruction: {name}")
                 raise ValueError(f"Unsupported instruction: {name}")
 
@@ -199,7 +200,7 @@ class QubexCircuit(BaseCircuit):
         pulse_scheduler = []
         for instruction in qc.data:
             name = instruction.operation.name
-            if name not in SUPPORTED_GATES:
+            if name not in _SUPPORTED_GATES:
                 logger.error(f"Unsupported instruction: {name}")
                 raise ValueError(f"Unsupported instruction: {name}")
 
@@ -249,8 +250,9 @@ class QubexCircuit(BaseCircuit):
             elif name == "barrier":
                 pulse_scheduler.append(self.barrier())
             else:
-                logger.error(f"Unsupported instruction: {name}")
-                pass
+                logger.error(f"Unrecognized instruction: {name}")
+                raise ValueError(f"Unrecognized instruction: {name}")
+
         classical_registers = []
         # qubex bit mapping is inversed of Qiskit e.g. qubex: | q0, q1, q2 >, qiskit: | q2, q1, q0 >
         inversed_classical_bit_mapping = sorted(

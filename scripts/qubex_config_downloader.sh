@@ -17,13 +17,13 @@ trap cleanup EXIT
 
 echo "Using QDash API base URL: ${API_URL}"
 
-mkdir -p qubex-config tmp
+mkdir -p ./config/qubex-config ./tmp
 
 echo "Downloading calibration note..."
 curl --fail -sS -X GET "${API_URL}/calibrations/note" \
   -H 'accept: application/json' \
   -H "Authorization: Bearer ${TOKEN}" \
-  | jq '.note' > qubex-config/calib_note.json
+  | jq '.note' > ./config/qubex-config/calib_note.json
 
 echo "Downloading Qubex configuration..."
 curl --fail -sS -L -X GET \
@@ -31,9 +31,9 @@ curl --fail -sS -L -X GET \
   -H "Authorization: Bearer ${TOKEN}" \
   -o "$ZIP_PATH"
 
-rm -rf ./qubex-config
-mkdir -p ./qubex-config
+rm -rf ./config/qubex-config
+mkdir -p ./config/qubex-config
 
-  unzip -oq "$ZIP_PATH" -d ./qubex-config
+  unzip -oq "$ZIP_PATH" -d ./config/qubex-config
 
   echo "Qubex configuration downloaded."
