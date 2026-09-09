@@ -1,0 +1,56 @@
+monitoring:
+  enabled: ${MONITORING_ENABLED, false}
+
+# gRPC settings
+proto:
+  max_workers: ${GATEWAY_WORKERS, 10} # Maximum number of workers
+  address: ${GATEWAY_ADDRESS, "localhost:51021"} # Address and port for RPCs
+  grpc_options:
+    - ["grpc.max_receive_message_length", ${GRPC_MAX_RECEIVE_MESSAGE_LENGTH, 4194304}]
+    - ["grpc.max_send_message_length", ${GRPC_MAX_SEND_MESSAGE_LENGTH, 4194304}]
+
+# Common backend settings
+common_backend_settings: &common_backend_settings
+  device_info:
+    # device_id: "qulacs"
+    provider_id: "oqtopus"
+    # max_qubits: 16
+    max_shots: 10000
+  device_status_path: config/device_status
+  device_topology_json_path: config/device_topology_sim.json
+
+# Backend configuration
+default_backend: stim  # Available options: "qulacs", "qubex", "stim"
+
+# Dependency Injection Container Configuration
+backend_di_container:
+  registry:
+    # QulacsBackend settings
+    qulacs:
+      _target_: device_gateway.plugins.qulacs.backend.QulacsBackend
+      device_type: simulator
+      config: *common_backend_settings
+      plugin_config:
+        # Comment out supported_gates below to disable gate-name validation entirely.
+        supported_gates: [x, sx, rz, cx, measure, barrier, delay]
+    # QubexBackend settings
+    qubex:
+      _target_: device_gateway.plugins.qubex.backend.QubexBackend
+      device_type: QPU
+      config: *common_backend_settings
+      plugin_config:
+        chip_id: ${CHIP_ID, 64Q}
+        config_dir: ${CONFIG_DIR, "/app/qubex-config/{chip_id}/config"}
+        params_dir: ${PARAMS_DIR, "/app/qubex-config/{chip_id}/params"}
+        calib_note_path: ${CALIB_NOTE_PATH, "/app/qubex-config/{chip_id}/calibration/calib_note.json"}
+        configuration_mode: ${CONFIGURATION_MODE, "ge-cr-cr"}  # Options: "ge-cr-cr", "ge-ef-cr"
+        shot_interval: ${SHOT_INTERVAL, 307200}  # Interval between shots in ns
+    # StimBackend settings
+    stim:
+      _target_: device_gateway.plugins.stim.backend.StimBackend
+      device_type: simulator
+      config: *common_backend_settings
+      plugin_config:
+        # stim only supports Clifford gates; unsupported (non-Clifford) gates are
+        # logged and ignored rather than raising. supported_gates is informational.
+        supported_gates: [x, h, sx, z, rz, cx, measure, barrier, delay]
