@@ -1,0 +1,28 @@
+monitoring:
+  enabled: false
+
+# gRPC settings
+proto:
+  max_workers: 10
+  address: "localhost:51021"
+
+# Common backend settings
+common_backend_settings: &common_backend_settings
+  device_info:
+    provider_id: "oqtopus"
+    max_shots: 10000
+  device_status_path: /Users/tmori/work/oqtopus/device-gateway/scratch-stim256/device_status
+  device_topology_json_path: /Users/tmori/work/oqtopus/device-gateway/scratch-stim256/device_topology_sim_256.json
+
+# Backend configuration
+default_backend: stim
+
+# Dependency Injection Container Configuration
+backend_di_container:
+  registry:
+    stim:
+      _target_: device_gateway.plugins.stim.backend.StimBackend
+      device_type: simulator
+      config: *common_backend_settings
+      plugin_config:
+        supported_gates: [x, h, sx, z, rz, cx, measure, barrier, delay]
