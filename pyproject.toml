@@ -80,7 +80,7 @@ omit = [
 ]
 
 [tool.uv.sources]
-qubex = { git = "https://github.com/amachino/qubex.git", tag = "develop" }
+qubex = { git = "https://github.com/amachino/qubex.git", branch = "develop" }
 
 [tool.pymarkdown]
 plugins.line-length.enabled = false            # MD013: Disable line length limit
