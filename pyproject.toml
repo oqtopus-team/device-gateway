@@ -24,6 +24,7 @@ dependencies = [
     "opentelemetry-instrumentation-system-metrics>=0.48b0",
     "typing-extensions>=4.14.0",
     "oqtopus-util==1.0.2",
+    "python-json-logger>=2.0.7",
 ]
 
 [dependency-groups]
@@ -40,7 +41,6 @@ dev = [
     "pymdown-extensions>=10.14.3",
     "mkdocs-exclude>=1.0.2",
     "jupyter>=1.1.1",
-    "python-json-logger>=2.0.7",
     "pytest-mock>=3.14.0",
     "pymarkdownlnt>=0.9.38",
 ]
@@ -80,7 +80,7 @@ omit = [
 ]
 
 [tool.uv.sources]
-qubex = { git = "https://github.com/amachino/qubex.git", tag = "develop" }
+qubex = { git = "https://github.com/amachino/qubex.git", branch = "develop" }
 
 [tool.pymarkdown]
 plugins.line-length.enabled = false            # MD013: Disable line length limit
