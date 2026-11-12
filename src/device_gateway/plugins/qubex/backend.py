@@ -1,9 +1,11 @@
 import logging
+from typing import cast
 
 import numpy as np
 from opentelemetry import trace
 from qiskit.qasm3 import loads
 from qiskit.result import Counts, LocalReadoutMitigator, ProbDistribution
+from qubex.backend.quel3 import Quel3BackendController
 from qubex.experiment import Experiment
 from qubex.measurement.measurement_defaults import DEFAULT_SHOTS
 from qubex.pulse import PulseSchedule
@@ -38,6 +40,12 @@ class QubexBackend(BaseBackend):
             calib_note_path=calib_note_path,
             configuration_mode=configuration_mode,
         )
+        if "quelware_client_token" in plugin_config:
+            token = plugin_config["quelware_client_token"]
+            controller = cast(
+                Quel3BackendController, self._experiment.backend_controller
+            )
+            controller.set_quelware_pat_provider(lambda: token)
         self._compiler = QubexCompiler(self)
 
     @property
