@@ -1,5 +1,4 @@
 import logging
-from typing import cast
 
 import numpy as np
 from opentelemetry import trace
@@ -40,11 +39,12 @@ class QubexBackend(BaseBackend):
             calib_note_path=calib_note_path,
             configuration_mode=configuration_mode,
         )
-        if "quelware_client_token" in plugin_config:
+        controller = self._experiment.backend_controller
+        if (
+            isinstance(controller, Quel3BackendController)
+            and "quelware_client_token" in plugin_config
+        ):
             token = plugin_config["quelware_client_token"]
-            controller = cast(
-                Quel3BackendController, self._experiment.backend_controller
-            )
             controller.set_quelware_pat_provider(lambda: token)
         self._compiler = QubexCompiler(self)
 
