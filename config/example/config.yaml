@@ -40,6 +40,8 @@ backend_di_container:
       config: *common_backend_settings
       plugin_config:
         chip_id: ${CHIP_ID, 64Q}
+        # QuEL-3: uncomment and set the quelware client PAT.
+        # quelware_client_token: "YOUR_QUELWARE_PAT"
         config_dir: ${CONFIG_DIR, "/app/qubex-config/{chip_id}/config"}
         params_dir: ${PARAMS_DIR, "/app/qubex-config/{chip_id}/params"}
         calib_note_path: ${CALIB_NOTE_PATH, "/app/qubex-config/{chip_id}/calibration/calib_note.json"}
