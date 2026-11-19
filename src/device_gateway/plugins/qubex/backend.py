@@ -87,9 +87,14 @@ class QubexBackend(BaseBackend):
             res = self._experiment.build_classifier(
                 targets=qubit, plot=False, shot_interval=self._shot_interval
             )
+            # readout_fidelities[qubit] = [P(meas 0 | prep 0), P(meas 1 | prep 1)]
+            fidelity_0, fidelity_1 = res["readout_fidelities"][qubit][:2]
             note[qubit] = {
-                "p0m1": 1 - res["readout_fidelities"][qubit][0],
-                "p1m0": 1 - res["readout_fidelities"][qubit][1],
+                "prob_meas1_prep0": 1 - fidelity_0,
+                "prob_meas0_prep1": 1 - fidelity_1,
+                # Derived from the same measurement so that the three meas_error
+                # fields are always consistent with each other.
+                "readout_assignment_error": 1 - (fidelity_0 + fidelity_1) / 2,
             }
         return note
 
@@ -105,22 +110,36 @@ class QubexBackend(BaseBackend):
         """
         Update the device topology with readout errors.
         This method is called during the initialization of the QubexBackend.
+
+        All meas_error fields (prob_meas1_prep0, prob_meas0_prep1 and
+        readout_assignment_error) are replaced together so that values from
+        different calibrations are never mixed in device_info.
         """
-        device_topology = self.device_topology
-        for qubit in self.qubits:
-            id = self.physical_index(qubit)
-            qubit_info = self._search_qubit_by_id(id)
-            if qubit_info is not None:
-                qubit_info["meas_error"]["prob_meas1_prep0"] = readout_errors[qubit][
-                    "p0m1"
-                ]
-                qubit_info["meas_error"]["prob_meas0_prep1"] = readout_errors[qubit][
-                    "p1m0"
-                ]
-            logger.info(
-                f"Updated readout errors for qubit {qubit}: {qubit_info['meas_error']}"
-            )
-            device_topology["qubits"][id] = qubit_info
+        # Re-read the topology from disk so that a newer file (e.g. regenerated
+        # after a calibration) is not overwritten by a stale cached copy.
+        device_topology = self.load_device_topology()
+        qubits_by_label = {
+            self.physical_label(qubit_info["id"]): qubit_info
+            for qubit_info in device_topology.get("qubits", [])
+        }
+        for qubit, errors in readout_errors.items():
+            qubit_info = qubits_by_label.get(qubit)
+            if qubit_info is None:
+                logger.warning(f"Qubit {qubit} not found in device topology")
+                continue
+            meas_error = {
+                "prob_meas1_prep0": errors["prob_meas1_prep0"],
+                "prob_meas0_prep1": errors["prob_meas0_prep1"],
+                "readout_assignment_error": errors["readout_assignment_error"],
+            }
+            if meas_error["readout_assignment_error"] >= 0.5:
+                logger.warning(
+                    f"Readout assignment error of qubit {qubit} is not better than "
+                    f"random guessing ({meas_error}). The state classifier may be "
+                    "mislabeled; recalibration of the readout is recommended."
+                )
+            qubit_info["meas_error"] = meas_error
+            logger.info(f"Updated readout errors for qubit {qubit}: {meas_error}")
         self.save_device_topology(device_topology)
 
     def _execute(self, circuit: PulseSchedule, shots: int = DEFAULT_SHOTS):
